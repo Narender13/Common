@@ -1,0 +1,13 @@
+<!-- Portfolio Detail -->
+<section id="portfolioDetail">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2" *ngIf="portfolio">
+                <h2 class="text-center">{{portfolio.title}}</h2>
+                <hr class="star-primary">
+                <img src="{{portfolio.url}}" class="img-responsive img-centered" alt="">
+                <p>{{portfolio.desc}}</p>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,29 @@
+========http://www.json-generator.com/==========
+
+[
+  '{{repeat(50)}}',
+  {
+    id: '{{index()}}',
+    name: {
+      firstName:'{{firstName()}}',
+      lastName: '{{surname()}}'
+    },
+    gender:'{{gender()}}',
+    email: '{{email()}}',
+    phone: '+91 {{phone()}}',
+    address: {
+      streetName:'{{street()}}',
+      city:'{{city()}}, {{state()}}',
+      pin:'{{integer(100000, 888888)}}'
+    },
+    emergencyContacts: [
+      '{{repeat(1, 3)}}',
+      {
+         id: '{{index()}}',
+         name:'{{firstName()}} {{surname()}} ',
+         phone:'+91 {{phone()}}',
+         gender:'{{gender()}}'
+      }
+    ]
+  }
+]
