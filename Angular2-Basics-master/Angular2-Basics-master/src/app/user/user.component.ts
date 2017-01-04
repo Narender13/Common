@@ -3,6 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import {UserService} from '../common/user.service'
 import { user } from '../common/user.model';
 import { Observable } from 'rxjs/Observable';
+import {Location} from '@angular/common'
+import {Router} from '@angular/router';
 
 @Component({
   selector: 'user',
@@ -24,12 +26,18 @@ import { Observable } from 'rxjs/Observable';
    background-color:#E91E63;
    overflow:auto;
    cursor:pointer;
-   transition:all 0.3s ease;
+   transition:all .2s ease-in-out;
        min-height: 650px;
 
    }
     .addressWraper:hover{
       box-shadow: -1px 4px 50px 8px #F44336;
+       -webkit-transform: scale(1.1);
+    -moz-transform: scale(1.1);
+    -ms-transform: scale(1.1);
+    -o-transform: scale(1.1);
+    transform: scale(1.1);
+    z-index:200;
     }
     .emergency{
 
@@ -85,6 +93,7 @@ import { Observable } from 'rxjs/Observable';
    </div>
   </div>
   </div>
+  <button class="btn btn-primary" (click)="changelocation()">Change URL</button>
   <div   #mymodal class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -102,9 +111,14 @@ import { Observable } from 'rxjs/Observable';
 export class UserComponent implements OnInit {
   _user: user[];
   _ediruserdata=[];
-  constructor( private _userService: UserService) {
+   constructor( private _userService: UserService,public location: Location, public router:Router) {
 
+    // renderer.setElementStyle(el.nativeElement, 'backgroundColor', 'yellow');
+   
+  }
 
+  changelocation(){
+  this.router.navigate(['/portfoliodetail/2']);
   }
 
   ngOnInit() {
