@@ -1,0 +1,1 @@
+$(selector).val().replace(/\s/g, "")
