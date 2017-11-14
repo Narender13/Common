@@ -1,1 +1,6 @@
 
+$(".noSpaces").on("keyup", function (event) {
+ -        if (/^\s/g.test($(this).val())) {
+ -            $(this).val($(this).val().replace(/^\s+/, ''))
+ -        }
+ -    })
