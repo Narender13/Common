@@ -4,3 +4,6 @@ $(".noSpaces").on("keyup", function (event) {
  -            $(this).val($(this).val().replace(/^\s+/, ''))
  -        }
  -    })
+
+
+
