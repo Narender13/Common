@@ -1,0 +1,51 @@
+
+
+1) Design Patterns 
+2) Classes, Inheritance, prototype 
+3) hoisting 
+4) Closures 
+5) polymorphism 
+6) encapsulation 
+7) Apply and call 
+8) IIFE (immediat invoking function expression) 
+9) Private and public variable and its scopes
+
+https://www.thepolyglotdeveloper.com/2016/02/upload-files-to-node-js-using-angular-2/
+https://herbpathy.com/Uses-and-Benefits-of-Cow-Urine-Cid3539
+
+
+http://jasonwatmore.com/post/2017/02/22/mean-with-angular-2-user-registration-and-login-example-tutorial#home-component-html
+https://ciphertrick.com/2016/10/19/simple-pagination-for-angular2-applications/
+https://ciphertrick.com/category/angular-2/
+http://jasonwatmore.com/post/2016/12/01/angular-2-communicating-between-components-with-observable-subject
+https://accounts.portal.nttdatainc.com/sites/smg/projects/project_template/03Projects/Code%20Repository/Forms/AllItems.aspx
+https://www.youtube.com/watch?v=4i1nLrqMR14&index=2&list=PLgGUMhSgtxJyIQ4vI3BzlCzZLHL79Ew6p
+
+Flying Cards Tabs
+http://freefrontend.com/css-tabs/
+https://codepen.io/dviate/pen/QwwOmY 
+http://cssdeck.com/labs/stack-of-cards 
+https://tympanus.net/Development/CardStackEffects/
+https://codepen.io/njs/pen/pRLKYQ 
+https://codepen.io/prasannapegu/pen/JdyrZP
+[?9/?11/?2017 2:57 PM] Sharma, Sanjay12: 
+https://codemyui.com/card-stack-with-multiple-reveal-animation/ 
+
+https://jsfiddle.net/mtkkxL88/
+http://romacode.com/blog/track-youtube-video-events-and-checkpoints-in-google-analytics-using-jquery
+https://www.coursera.org/learn/angular-js/lecture/SsyQu/exercise-video-angular-factory-and-service
+https://lms.portal.nttdatainc.com/blocks/classroom/currentcalender.php?location=Virtual%2FWebinar
+http://www.jqueryscript.net/other/Easy-Any-Content-Pagination-Plugin-jQuery-Paginate-js.html
+https://jsfiddle.net/frncsdrk/pkkep679/
+
+Removing Previous Button on First Step jQuery Steps
+http://jsfiddle.net/1cdjy45s/1/
+$('#fields_u').multiselect('select', ['0', '1']);
+http://jsfiddle.net/svv742r7/10/
+https://jsfiddle.net/3rp5vxuL/1/ convert minutes to hours and day
+https://jsfiddle.net/o5f7k0gy/ - pic values of dynomic inputs
+
+
+
+
+var width = (window.innerWidth > 0) ? window.innerWidth : screen.width;
