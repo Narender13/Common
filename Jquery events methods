@@ -15,3 +15,9 @@ $('textarea').each(function () {
   this.style.height = 'auto';
   this.style.height = (this.scrollHeight) + 'px';
 });
+//------fetch only numeric value ----//
+
+$(this).attr('id').replace(/[^0-9]/g, '')
+
+//-----remove white space from begining from string ---//
+$(this).text().replace(/^\s+/, "");
