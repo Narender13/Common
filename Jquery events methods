@@ -21,3 +21,7 @@ $(this).attr('id').replace(/[^0-9]/g, '')
 
 //-----remove white space from begining from string ---//
 $(this).text().replace(/^\s+/, "");
+
+//---------------------filter div on class----///
+http://jsfiddle.net/Z9ZVk/68/
+https://codepen.io/terf/post/jquery-filter-divs
