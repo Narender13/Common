@@ -24,4 +24,104 @@ $(this).text().replace(/^\s+/, "");
 
 //---------------------filter div on class----///
 http://jsfiddle.net/Z9ZVk/68/
+
+var allSelectedindustriesClasses;
+    allSelectedindustriesClasses = '';
+    //display two items selected from dropdowns and more than 2 display as number
+    $(document).ready(function () {
+        changeMenu("Engagements");
+        $('#topics,#Industries').multiselect({
+            numberDisplayed: 2,
+        });
+    });
+
+    $(document).ready(function () {
+
+        $('.topics input[type="checkbox"]').click(function () {
+            //ensure the correct classes are added to the running list
+
+            if (this.checked) {
+                allSelectedClasses += '.' + $(this).val();
+            } else {
+                allSelectedClasses = allSelectedClasses.replace($(this).val(), '');
+            }
+            fdApplyFilter();
+        });
+        $('.industries input[type="checkbox"]').click(function () {
+            //ensure the correct classes are added to the running list
+
+            if (this.checked) {
+                allSelectedindustriesClasses += '.' + $(this).val();
+            } else {
+                allSelectedindustriesClasses = allSelectedindustriesClasses.replace($(this).val(), '');
+            }
+            fdApplyFilter();
+
+        });
+    });
+
+    function fdApplyFilter() {
+        //format the list of classes
+        allSelectedClasses = allSelectedClasses.replace(' ', '');
+        allSelectedindustriesClasses = allSelectedindustriesClasses.replace(' ', '');
+
+        var selectedClassesindusty = allSelectedindustriesClasses.split(".");
+        var selectedClasses = allSelectedClasses.split(".");
+
+        var removeItem = "";
+
+        selectedClasses = jQuery.grep(selectedClasses, function (value) {
+            return value != removeItem;
+        });
+
+        selectedClassesindusty = jQuery.grep(selectedClassesindusty, function (value) {
+            return value != removeItem;
+        });
+
+        $("#packageListactivity div.gridItem").hide();
+        if (selectedClassesindusty.length <= 0 && selectedClasses <= 0) {
+            $("#packageListactivity div.gridItem").show();
+        }
+
+        //format these for the jquery selector
+
+        for (var i = 0; i < selectedClasses.length; i++) {
+            $("#packageListactivity div.gridItem").each(function () {
+                var $pck = $(this);
+                if ($pck.hasClass(selectedClasses[i])) {
+                    if (selectedClassesindusty.length > 0) {
+                        for (var j = 0; j < selectedClassesindusty.length; j++) {
+                            if ($pck.hasClass(selectedClassesindusty[j])) {
+                                $pck.show();
+                            }
+                        }
+                    }
+                    else {
+                        $pck.show();
+                    }
+                }
+            });
+        }
+        for (var i = 0; i < selectedClassesindusty.length; i++) {
+            $("#packageListactivity div.gridItem").each(function () {
+                var $pck = $(this);
+                if ($pck.hasClass(selectedClassesindusty[i])) {
+                    if (selectedClasses.length > 0) {
+                        for (var j = 0; j < selectedClasses.length; j++) {
+                            if ($pck.hasClass(selectedClasses[j])) {
+                                $pck.show();
+                            }
+                        }
+                    }
+                    else {
+                        $pck.show();
+                    }
+                }
+            });
+        }
+    }
+
+
+
 https://codepen.io/terf/post/jquery-filter-divs
+
