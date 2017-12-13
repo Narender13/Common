@@ -1,0 +1,10 @@
+$('.form_datetime').datetimepicker({
+        format: 'mm/dd/yyyy',
+        startDate: new Date(),
+        autoclose: true,
+        pickTime: false,
+        minView: 2,
+        //todayBtn: true,
+        pickerPosition: "bottom-left",
+        // autoclose: true
+    }).on('changeDate', function (e) {
