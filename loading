@@ -1,0 +1,42 @@
+function loading($type, $displayarea, $bg) {
+    var $load = $type || 'show';
+    var $displayarea = $displayarea || 'body';
+    var $bg = $bg || 'rgba(0, 0, 0, 0.7)';
+    if ($load == 'show') {
+        if ($($displayarea + ' .loadingImageData').length == 0) {
+            $($displayarea).append('<div class="loadingImageData"><div class="loader"></div></div>');
+            $('.loadingImageData').hide();
+        }
+        $($displayarea).addClass('loadingState');
+        $('.loadingImageData').css({
+            top: $displayarea == 'body' ? $($displayarea).position().top : 0,
+            left: $displayarea == 'body' ? $($displayarea).position().left : 0,
+            bottom: $displayarea == 'body' ? $($displayarea).position().bottom : 0,
+            right: $displayarea == 'body' ? $($displayarea).position().right : 0,
+            width: '100%',
+            height: '100%',
+            position: $displayarea == 'body' ? 'fixed' : 'absolute',
+            'z-index': '9999',
+            opacity: '.7',
+            background: $bg
+        });
+        $('.loadingImageData .loader').css({
+            top: 0,
+            left: 0,
+            bottom: 0,
+            right: 0,
+            margin: 'auto',
+            position: 'absolute',
+            height: '60px',
+            width: '60px',
+
+        });
+        $('.loadingImageData').show();
+    } else {
+        setTimeout(function () {
+            $($displayarea).removeClass('loadingState');
+            $('.loadingImageData').hide();
+        }, 1000);
+
+    }
+}
