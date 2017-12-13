@@ -1,0 +1,408 @@
+ pdfHeader: function (data) {
+        var data = data.Playbook.PlaybookHeader;
+        //var myplaybook = data.Playbook.MyPlaybook;
+        console.log(data.AE);
+        var columnHeader = {};
+       
+        columnHeader.columnFirst = [
+            
+                        {
+                            text: 'Client:', style: 'title', margin: [0, 5],
+                        },
+                        {
+                            text: 'Topic(s)', style: 'title', margin: [0, 5],
+                        },
+
+                        {
+                            text: 'Assigned to', style: 'title', margin: [0, 5],
+                        },
+                        {
+                            text: 'AE:', style: 'title', margin: [0, 5],
+                        },
+        ];
+        columnHeader.columnSecond = [
+            
+                   {
+                       text: 'Engagement Type:', style: 'title', margin: [0, 5],
+                   },
+                   {
+                       text: 'Engagement Status:', style: 'title', margin: [0, 5],
+                   },
+
+                   {
+                       text: 'Date(s):', style: 'title', margin: [0, 5],
+                   },
+                   {
+                       text: 'Duration:', style: 'title', margin: [0, 5],
+                   },
+        ];
+
+        columnHeader.columnfirstInfo = [
+
+                   {
+                       text: data.ClientName.toString(), style: 'content', margin: [0, 5],
+                   },
+                   {
+                       text: data.Topics.toString(), style: 'content', margin: [0, 5],
+                   },
+
+                   {
+                       text: data.AssignTo.toString(), style: 'content', margin: [0, 5],
+                   },
+                   {
+                       text: data.AE.toString(), style: 'content', margin: [0, 5],
+                   },
+        ];
+        columnHeader.columnSecondInfo = [
+
+                   {
+                       text: data.EngagementType.toString(), style: 'content', margin: [0, 5],
+                   },
+                   {
+                       text: data.EngagementStatus.toString(), style: 'content', margin: [0, 5],
+                   },
+
+                   {
+                       text: data.Date.toString(), style: 'content', margin: [0, 5],
+                   },
+                   {
+                       text: '0 day(s) 7 hour(s)', style: 'content', margin: [0, 5],
+                   },
+        ];
+        columnHeader.participantsHeader = [
+
+                  {
+                      text: "NTT", style: 'title', margin: [0, 5],
+                  },
+                  {
+                      text: 'Client', style: 'title', margin: [0, 5],
+                  },
+
+        ];
+
+        columnHeader.playbookName = "Playbook";
+        columnHeader.title = data.Title.toString()
+        columnHeader.playbookDetailName = "Playbook Details";
+
+            return columnHeader;
+
+    },
+    exportPDF: function () {
+        loading();
+        $.ajax({
+            type: "GET",
+            url: "/Agenda/AEJsonObject",
+            cache: false,
+            success: function (resultdata) {
+                console.log(JSON.stringify(resultdata));
+                playbookDetails.getPdf(resultdata);
+            },
+            error: function (resultdata) {
+                console.log(resultdata.statusText);
+            }
+        });
+    },
+    getPdf: function (data) {
+        if (data)
+        var pdfformat = this.pdfHeader(data);
+        var myplaybook = data.Playbook.MyPlaybook;
+        var benifits = [];
+        var inputs = [];
+        var outputs = [];
+        var participantA = [];
+        var participantB = [];
+        var sampleInput = [];
+        var sampleOutput = [];
+       // var packages = [];
+        if (myplaybook.PackageBenefits.length != 0) {
+         
+            for (i = 0; i < myplaybook.PackageBenefits.length; i++) {
+                benifits.push(myplaybook.PackageBenefits[i].Benefits.toString())
+            };
+        }
+        if (myplaybook.PackageInputs.length != 0) {
+
+            for (i = 0; i < myplaybook.PackageInputs.length; i++) {
+                inputs.push(myplaybook.PackageInputs[i].Input.toString())
+            };
+        }
+        if (myplaybook.PackageOutputs.length != 0) {
+            for (i = 0; i < myplaybook.PackageOutputs.length; i++) {
+                outputs.push(myplaybook.PackageOutputs[i].Output.toString())
+            };
+        }
+        if (myplaybook.ParticipantsA.length != 0) {
+           for (i = 0; i < myplaybook.ParticipantsA.length; i++) {
+               participantA.push({ "text": myplaybook.ParticipantsA[i].MinCount.toString() + "-" + myplaybook.ParticipantsA[i].MaxCount.toString() + " " + myplaybook.ParticipantsA[i].ResourceType.toString() })
+         };
+       }
+        if (myplaybook.ParticipantsB.length != 0) {
+           for (i = 0; i < myplaybook.ParticipantsA.length; i++) {
+                participantB.push(myplaybook.ParticipantsB[i].VisitorResource.toString());
+           };
+        }
+
+        if (myplaybook.InputOnly.length != 0) {
+            for (i = 0; i < myplaybook.InputOnly.length; i++) {
+                sampleInput.push(myplaybook.InputOnly[i].Caption.toString());
+            };
+        }
+        if (myplaybook.OutputOnly.length != 0) {
+            for (i = 0; i < myplaybook.OutputOnly.length; i++) {
+                sampleOutput.push(myplaybook.OutputOnly[i].Caption.toString());
+            };
+        }
+            function buildTableBody(data, columns) {
+                var body = [];
+
+                body.push(columns);
+
+                data.forEach(function (row) {
+                    var dataRow = [];
+
+                    columns.forEach(function (column) {
+                        dataRow.push(row[column].toString());
+                    })
+
+                    body.push(dataRow);
+                });
+
+                return body;
+            }
+
+            function table(data, columns) {
+                return {
+                    style: 'tableExample',
+                    table: {
+                        headerRows: 1,
+                        body: buildTableBody(data, columns)
+                    },
+                    layout: {
+                        hLineWidth: function (i, node) { return (i === 0 || i === node.table.body.length) ? 2 : 1; },
+                        vLineWidth: function (i, node) { return (i === 0 || i === node.table.widths.length) ? 2 : 1; },
+                        hLineColor: function (i, node) { return (i === 0 || i === node.table.body.length) ? '#51deff' : '#51deff'; },
+                        vLineColor: function (i, node) { return (i === 0 || i === node.table.widths.length) ? '#51deff' : '#51deff'; }
+                    }
+
+                };
+            }
+            var agenda =[];
+            console.log(myplaybook.PlaybookAgenda.AgendaDayCollection.length);
+            for (i = 0; i < myplaybook.PlaybookAgenda.AgendaDayCollection.length; i++) {
+                agenda.push(table(myplaybook.PlaybookAgenda.AgendaDayCollection[i].AgendaPackageCollection, ['PackageName', 'Description', 'Duration']),)
+            };
+       {
+           var docDefinition = {
+               background: [
+                   {
+                       image: 'background.png',
+                       width: 792
+                   }
+               ],
+
+
+               //header: {
+               //    text: pdfformat.playbookName,
+               //    fontSize: 15,
+               //    alignment: 'center',
+               //    margin: [20, 20],
+               //    color: '#51deff',
+               //    bold: true,
+
+               //},
+               content: [
+                   {
+                       alignment: 'left',
+                       columns:[ {
+                           image: 'logo.png',
+                           width: 30,
+                           height: 30,
+                           // margin: [left, top, right, bottom]
+                       },
+                         { text: 'Digital Engagement Framework', style: 'title', margin: [10,10,0,20] },
+               
+                       ],
+                   },
+               
+                    { text: pdfformat.title, style: 'playbookDetails', margin: [0, 10], decoration: 'underline', decorationColor: '#51deff' },
+
+                   {
+                       alignment: 'left',
+                       columns: pdfformat.columnFirst,
+                   },
+                   {
+                       alignment: 'left',
+                       columns: pdfformat.columnfirstInfo,
+                   },
+                
+                   {
+                       alignment: 'left',
+                       columns: pdfformat.columnSecond,
+                   },
+                    {
+                        alignment: 'left',
+                        columns: pdfformat.columnSecondInfo,
+                    },
+
+                     { text: 'Playbook Details', style: 'playbookDetails', margin: [0, 10], decoration: 'underline', decorationColor: '#51deff' },
+                     { text: 'Name of Engagemen', style: 'title', margin: [0, 10] },
+                     {
+                         style: 'content',
+                         italics: false,
+                         text: [myplaybook.EngagementName.toString()],
+                        
+                     },
+
+                     { text: 'Playbook Overview', style: 'title', margin: [0, 10] },
+                     {
+                         style: 'content',
+                         italics: false,
+                         text: [myplaybook.PlaybookOverview?myplaybook.PlaybookOverview:"NO Data".toString()],
+
+                     },
+
+                      { text: 'Packages, Activities', style: 'title', margin: [0, 10] },
+                     //{
+                     //    style: 'content',
+                     //    italics: false,
+                     //    text: packages,
+
+                     //},
+                        table(myplaybook.PlaybookPackageDetailModel, ['PackageName', 'Description', 'ActivityName']),
+                        { text: 'Agenda', style: 'title', margin: [0, 10] },
+                        agenda,
+
+                      { text: 'Engagement Duration', style: 'title', margin: [0, 10] },
+                      {
+                          style: 'content',
+                          italics: false,
+                          text: [myplaybook.EngagementDuration ? myplaybook.EngagementDuration : "NO Data".toString()],
+
+                      },
+
+                       { text: 'Price', style: 'title', margin: [0, 10] },
+                      {
+                          style: 'content',
+                          italics: false,
+                          text: [myplaybook.Price ? myplaybook.Price : "NO Data".toString()],
+
+                      },
+
+                        { text: 'Cost', style: 'title', margin: [0, 10] },
+                      {
+                          style: 'content',
+                          italics: false,
+                          text: [myplaybook.Cost ? myplaybook.Cost : "NO Data".toString()],
+
+                      },
+
+                      { text: 'Benefits', style: 'title', margin: [0, 10] },
+                      {
+                          style:"content",
+                          ul: benifits,
+                      },
+
+                      { text: 'Details', style: 'title', margin: [0, 10] },
+                      {
+                          style: 'content',
+                          italics: false,
+                          text: [myplaybook.Detail ? myplaybook.Detail.replace(/\<p>/g,"").replace("</p>", "") : "NO Data".toString()],
+
+                      },
+
+                       { text: 'Participants', style: 'title', margin: [0, 5] },
+                       {
+                           
+                           alignment: 'left',
+                           columns: pdfformat.participantsHeader,
+
+                       },
+                         {
+                             alignment: 'left',
+                             style: "content",
+                             margin: [0, 0] ,
+                             columns: [participantA,participantB],
+
+                         },
+                        
+
+
+
+
+                       {
+                           alignment: 'left',
+                           columns: pdfformat.participantsHeader,
+
+                       },
+
+                        { text: 'Inputs', style: 'title', margin: [0, 10] },
+                      {
+                          style: "content",
+                          ul: inputs,
+                      },
+                        { text: 'Outputs', style: 'title', margin: [0, 10] },
+                      {
+                          style: "content",
+                          ul: outputs,
+                      },
+
+                      { text: 'Sample Input', style: 'title', margin: [0, 10] },
+                      {
+                          style: "content",
+                          ul: sampleInput,
+                      },
+                       { text: 'Sample Output', style: 'title', margin: [0, 10] },
+                      {
+                          style: "content",
+                          ul: sampleOutput,
+                      },
+                       
+                       
+             
+                ],
+                styles: {
+                    title: {
+                        fontSize: 10,
+                        bold: true,
+                        color: '#fff',
+
+                    },
+                    tableExample: {
+                        margin: [0, 5, 0, 15],
+                        bold: true,
+                        fontSize: 8,
+                        color: '#51deff',
+                    },
+                    tableHeader: {
+                        bold: true,
+                        fontSize: 10,
+                        color: '#51deff',
+                    },
+                    playbookDetails:{
+                        fontSize: 12,
+                        bold: false,
+                        color: '#51deff',
+
+                    },
+                    content: {
+                        fontSize: 8,
+                        bold: false,
+                        color: '#51deff',
+                    },
+                    subheader: {
+                        fontSize: 10,
+                        bold: true
+                    },
+                    quote: {
+                        italics: true
+                    },
+                    small: {
+                        fontSize: 8
+                    }
+                }
+
+            };
+            pdfMake.createPdf(docDefinition).download('MyPlayBook.pdf');
+            loading("hide");
+    }
+    },
