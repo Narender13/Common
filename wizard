@@ -1,0 +1,240 @@
+<div class="col-sm-12 intro text-left">
+                            Survey Questions
+                            <div class="divider margin-top-15"></div>
+                        </div>
+                        <form role="form">
+                           
+                                @foreach (var item in Model.GroupBy(x => x.SurveyQuestionID).Select(x => x.FirstOrDefault()))
+                                {
+                                    j = 0;
+                                    k = 0;
+                                    if (@item.QuestionType.ToLower() == "text")
+                                    {
+                                    <!--Question Type Text-->
+                                        <div class="row setup-content" data-questionType="text" data-questionId=@(item.SurveyQuestionID) id=@("step-"+i.ToString())>
+
+                                            <div class="col-xs-12">
+                                                <div class="col-md-12">
+                                                    @if (@item.QuestionText == "What is the desired duration in days for this engagement?")
+                                                    {
+                                                        <div data-question-type="text" class="form-group">
+                                                            <label for="email" class="bold-12 margin-bottom-20 lightBlue">@item.QuestionText</label>
+                                                            @if (@item.SelectedAnswerText != null)
+                                                            {
+                                                                <textarea rows="5" placeholder="Only numeric value allowed" class="noSpaces form-control numeric" value=@item.SelectedAnswerText id="" required="required">@item.SelectedAnswerText</textarea>
+                                                                <p class="help-block">This field is required</p>
+                                                            }
+                                                            else
+                                                            {
+                                                                <textarea rows="5" placeholder="Only numeric value allowed" class="form-control numeric noSpaces" id="" required="required"></textarea>
+                                                                <p class="help-block">This field is required</p>
+                                                            }
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div data-question-type="text" class="form-group">
+                                                            <label for="email" class="bold-12 margin-bottom-20 lightBlue">@item.QuestionText</label>
+                                                            @if (@item.SelectedAnswerText != null)
+                                                            {
+                                                                <textarea rows="5" class="form-control noSpaces validateInput" placeholder="Enter text" id="" required="required" value=@item.SelectedAnswerText>@item.SelectedAnswerText</textarea>
+                                                                <p class="help-block">This field is required</p>
+                                                            }
+                                                            else
+                                                            {
+                                                                <textarea rows="5" class="form-control noSpaces" placeholder="Enter text" id="" required="required"></textarea>
+                                                                <p class="help-block">This field is required</p>
+                                                            }
+
+                                                        </div>
+                                                    }
+                                                    <button id="btnNextQuestionTypeText" class="btn btn-primary nextBtn btn-lg pull-right" type="button">Next</button>
+                                                    @*@Html.ActionLink("Next", "CreatePlaybookSurveyNext", "Playbook", new { surveyquestionID = @item.SurveyQuestionID, surveyAnswerOptionID= @item.SurveyAnswerOptionID, answerText = @item.AnswerText}, new { @class = "btn btn-primary nextBtn btn-lg pull-right" })*@
+                                                    @if (i == 0)
+                                                    {
+                                                        <button class="btn buttonLightBlue backBtn btn-lg pull-right margin-right-15" onclick="location.href='@Url.Action("SelectPlannerTopic", "Playbook")'" type="button">Back</button>
+                                                    }
+                                                    else
+                                                    {
+                                                        <button class="btn buttonLightBlue  backBtn btn-lg pull-right margin-right-15" type="button">Back</button>
+                                                    }
+                                                   
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                    else if (@item.QuestionType.ToLower() == "radio")
+                                    {
+                                    <!--Question Type Radio-->
+                                        <div class="row setup-content" data-questionId=@item.SurveyQuestionID data-questionType="radio" id=@("step-"+i.ToString())>
+                                            <div class="col-xs-12">
+
+                                                <div data-question-type="radio" class="form-group wizardLayer ">
+                                                    <label class="bold-12 margin-bottom-20 lightBlue d-block" for="email">@item.QuestionText</label>
+                                                    <div class="help-block">Selection is required</div>
+
+                                                    <div id="questionOption" class="btn-group " data-toggle="buttons">
+                                                        @foreach (var items in Model.Where(s => s.SurveyQuestionID == item.SurveyQuestionID))
+                                                        {
+                                                            if (items.SelectedAnswerOptionID == items.SurveyAnswerOptionID)
+                                                            {
+                                                                <label class="btn btn-default bold-12 active" data-surveyansweroptionid=@items.SurveyAnswerOptionID id=@("d_op_" + k.ToString())>
+                                                                    <input id=@("q_op_" + k.ToString()) name="op" type="radio" value=@items.AnswerText checked="checked" required="required" />
+                                                                    <img src="~/img/icon-check-solid-grn.png" class="" alt="Selected option Icon">@items.AnswerText
+                                                                </label>
+                                                            }
+                                                            else
+                                                            {
+                                                                <label class="btn btn-default bold-12" data-surveyansweroptionid=@items.SurveyAnswerOptionID id=@("d_op_" + k.ToString())>
+                                                                    <input id=@("q_op_" + k.ToString()) name="op" type="radio" value=@items.AnswerText required="required" />
+                                                                    <img src="~/img/icon-check-solid-grn.png" class="" alt="Selected option Icon">@items.AnswerText
+                                                                </label>
+                                                            }
+                                                            k++;
+                                                        }
+                                                    </div>
+                                                </div>
+
+
+                                                <button id="btnNextQuestionTypeRadio" class="btn btn-primary nextBtn btn-lg pull-right" type="button">Next</button>
+                                                @*@Html.ActionLink("Next", "CreatePlaybookSurveyNext", "Playbook", new { surveyquestionID = @item.SurveyQuestionID, surveyAnswerOptionID = @item.SurveyAnswerOptionID, answerText = @item.AnswerText }, new { @class = "btn btn-primary nextBtn btn-lg pull-right" })*@
+                                               
+                                                @if (i == 0)
+                                                {
+                                                    <button class="btn buttonLightBlue backBtn btn-lg pull-right margin-right-15" onclick="location.href='@Url.Action("SelectPlannerTopic", "Playbook")'" type="button">Back</button>
+                                                }
+                                                else
+                                                {
+                                                    <button class="btn buttonLightBlue backBtn btn-lg pull-right margin-right-15" type="button">Back</button>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                    i++;
+                                }
+
+                        </form>
+                        <div class="stepwizard">
+                            <div class="stepwizard-row setup-panel">
+                                @foreach (var item in Model.GroupBy(x => x.SurveyQuestionID).Select(x => x.FirstOrDefault()))
+                                {
+                                    i = 0;
+                                    k = 0;
+                                    <div class="stepwizard-step">
+                                        <a href=#@("step-"+j.ToString()) type="button" class="btn btn-default btn-circle" disabled="disabled"></a>
+                                    </div>
+                                    j++;
+                                }
+                               
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        let navListItems = $('div.setup-panel div a'),
+               allWells = $('.setup-content'),
+               allNextBtn = $('.nextBtn');
+        allBackBtn = $('.backBtn');
+        allWells.hide();
+        $(".stepwizard-step:first-child a").removeAttr("disabled").addClass("btn-primary");
+        navListItems.click(function (e) {
+            e.preventDefault();
+            let $target = $($(this).attr('href')),
+                $item = $(this);
+
+            if (!$item.hasClass('disabled')) {
+                navListItems.removeClass('btn-primary').addClass('btn-default');
+                $item.addClass('btn-primary');
+                allWells.hide();
+                $target.show();
+                $target.find('input:eq(0)').focus();
+            }
+        });
+
+        allNextBtn.click(function () {
+            var _this = $(this);
+            let curStep = $(this).closest(".setup-content");
+            let questiontype = curStep.attr("data-questionType"),
+
+                curStepBtn = curStep.attr("id"),
+                nextStepWizard = $('div.setup-panel div a[href="#' + curStepBtn + '"]').parent().next().children("a"),
+
+                curInputs = curStep.find("textarea,input[type='radio']"),
+                isValid = true;
+
+            console.log(nextStepWizard.attr("href"));
+            $(".form-group").removeClass("has-error");
+            var $parent = _this.prev().attr("data-question-type");
+            if ($parent == "radio" &&  _this.prev().find("input[type='radio']:checked").length == 0) {
+                isValid = false;
+                _this.prev().addClass("has-error");
+            }
+            if ($parent == "text" && _this.prev().find("textarea").val().length == 0) {
+                isValid = false;
+                _this.prev().addClass("has-error");
+            }
+            //for (let i = 0; i < curInputs.length; i++) {
+            //    console.log(curInputs[i].validity.valid);
+            //    if (!curInputs[i].validity.valid) {
+            //        isValid = false;
+            //        $(curInputs[i]).closest(".form-group").addClass("has-error");
+            //    }
+            //}
+
+         
+
+            if (isValid) {
+              
+               
+               $.ajax({
+                   type: "POST",
+                   url: "/Playbook/CreatePlaybookSurveyNext",
+                   dataType: "json",
+                   data:
+                        {
+                           
+                            "surveyquestionID": curStep.attr("data-questionId"),
+                            "surveyAnswerOptionID": curStep.attr("data-questionType") != "text" ? curStep.find("#questionOption label.active").attr("data-surveyAnswerOptionID") : null,
+                            "answerText": curStep.attr("data-questionType") == "text" ? curStep.find("textarea").val() : null,
+                        }
+                        ,
+                   success: function (resultdata) {
+                       if (resultdata.statusCode === 200) {
+                           //window.location = resultdata.url;    curStep.find("#questionOption label.active").text().trim()
+                            console.log("sucess");
+
+                if (nextStepWizard.attr("href")) {
+                    nextStepWizard.removeAttr('disabled').trigger('click');
+                }
+                else {
+                    window.location.href = "/Playbook/SelectPlayBookPlanner";
+                }
+                        }
+                   },
+                   error: function (resultdata) {
+                       console.log("error");
+                   }
+                });
+
+            }
+
+
+        });
+
+        allBackBtn.click(function () {
+            let curStep = $(this).closest(".setup-content"),
+                curStepBtn = curStep.attr("id"),
+                backStepWizard = $('div.setup-panel div a[href="#' + curStepBtn + '"]').parent().prev().children("a")
+            backStepWizard.removeAttr('disabled').trigger('click');
+        });
+
+        $('div.setup-panel div a.btn-primary').trigger('click');
+
+
+    });
