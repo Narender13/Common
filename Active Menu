@@ -1,0 +1,6 @@
+active Menu
+function changeMenu($id) {
+            $('#menu_topbar li').removeClass('active');
+            $('#menu_' + $id).addClass('active');
+            $('body').trigger('click');
+        }
