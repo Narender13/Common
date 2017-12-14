@@ -5,6 +5,6 @@ var html = '<div class="light-12 whiteText content details">'+
            'to prioritize the most important issues and generate innovative solutions for them.</p>'+
          '</div>';
                                                     
-var noTagText = $(html).text();
+var noTagText = html.replace("<br>","\n\n")
 
-alert(noTagText)
+console.log($(noTagText).text())
