@@ -1,0 +1,10 @@
+var html = '<div class="light-12 whiteText content details">'+
+           '<p>The workshop tends to follow a common framework of four high-level segments:</p>'+
+           '<br>'+
+           '<p>Learn about NTT DATA Services’ perspective on improving employee engagement. '+
+           'to prioritize the most important issues and generate innovative solutions for them.</p>'+
+         '</div>';
+                                                    
+var noTagText = $(html).text();
+
+alert(noTagText)
