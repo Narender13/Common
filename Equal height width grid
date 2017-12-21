@@ -1,0 +1,94 @@
+<-----------------------------HTMl------------------------------------------->
+<section class="main">
+  <article>Gally maroon schooner wench provost fathom haul wind parrel chantey brigantine.  </article>
+  <article>Ho six pounders Arr black spot port jib hogshead spirits bilge rat Admiral of the Black. Blow the man down measured fer yer chains hail-shot jolly boat gangway pillage lugsail wherry Jolly Roger Privateer. </article>
+  <article>Lass gangplank bilged on her anchor bring a spring upon her cable rigging lookout Admiral of the Black sheet wench rutters. </article>
+  <article> Driver rope's end port spirits cog fore ye snow sloop hogshead. Belaying pin yo-ho-ho bilge rat come about squiffy spirits jack galleon Brethren of the Coast hang the jib.</article>
+  
+    <article>Hail-shot jolly boat gangway pillage lugsail wherry Jolly Roger Privateer.  </article>
+  <article>Plate Fleet strike colors nipper league warp to go on  </article>
+  <article>Admiral of the Black sheet wench rutters.</article>
+  <article>Jack galleon Brethren of the Coast hang the jib. Blow the man down measured fer yer. Admiral of the Black sheet wench rutters. </article>
+</section>
+
+
+
+
+<div style="clear:both;" class="container">  
+  	<section class="pattern-description">
+			<h1 style="font-size: 2.5em;">Responsive Equal Height Rows</h1>
+      <p>This pattern is a fork of a <a target="_blank" href="https://css-tricks.com/equal-height-blocks-in-rows/">CSS Tricks Post</a></p>
+      <p>To adapt this pattern for responsive use I placed it into a function and called it each time the window was resized. One note is that you must reset the div heights before you take a new measurement.</p>
+			<h3>Pros</h3>
+			<ul>
+			<li><strong>The Equal Height Rows Designers Crave</strong> - If a desiger uses a box, those boxes better line up or they lose their Adobe license. Really!</li>
+			<li><strong>Seperate heights for each row</strong> - Each row's height is calculated seperately, which works better for multi row layouts.</li>
+			<li><strong>Light</strong> - This is a pretty short script and could be omitted from your mobile, one column layout.</li>
+			</ul>
+			<h3>Cons</h3>
+      <ul>
+      <li><strong>Not a pure CSS solution</strong> - There are some pure CSS solutions out there, but they rely on background gradients or table displays, all which hack around the problem, rather than really solving it. Until we get flexbox, this will have to do.</li>
+        <li><strong>Not 100% finished</strong> - Would like better support for subdivisions, where a div could take up space on multiple/partial rows (think <a href="https://masonry.desandro.com/" target="_blank">Masonry</a>)</li>
+			</ul>
+      <p>I hope to put this design into production on a future project, so any feedback is appreciated. Feel free to contact me on twitter @<a target="_blank" href="https://twitter.com/micahgodbolt">micahgodbolt</a> or <a href="http://www.godbolt.me" target="_blank">visit my site</a> for other articles and tips.
+      </section>
+ </div> 	
+<---------------------------------------------CSS------------------------------------------------------>
+
+article {
+  float: left;
+  width: 23%;
+  background: #ccc;
+  margin: 10px 1%;
+  padding: 1%;
+}
+
+@media all and (max-width: 900px) {
+article {
+    width: 48%
+  }
+  <----------------------------------------------Jquery------------------------------------------------->
+  
+  /* Thanks to CSS Tricks for pointing out this bit of jQuery
+https://css-tricks.com/equal-height-blocks-in-rows/
+It's been modified into a function called at page load and then each time the page is resized. One large modification was to remove the set height before each new calculation. */
+
+equalheight = function(container){
+
+var currentTallest = 0,
+     currentRowStart = 0,
+     rowDivs = new Array(),
+     $el,
+     topPosition = 0;
+ $(container).each(function() {
+
+   $el = $(this);
+   $($el).height('auto')
+   topPostion = $el.position().top;
+
+   if (currentRowStart != topPostion) {
+     for (currentDiv = 0 ; currentDiv < rowDivs.length ; currentDiv++) {
+       rowDivs[currentDiv].height(currentTallest);
+     }
+     rowDivs.length = 0; // empty the array
+     currentRowStart = topPostion;
+     currentTallest = $el.height();
+     rowDivs.push($el);
+   } else {
+     rowDivs.push($el);
+     currentTallest = (currentTallest < $el.height()) ? ($el.height()) : (currentTallest);
+  }
+   for (currentDiv = 0 ; currentDiv < rowDivs.length ; currentDiv++) {
+     rowDivs[currentDiv].height(currentTallest);
+   }
+ });
+}
+
+$(window).load(function() {
+  equalheight('.main article');
+});
+
+
+$(window).resize(function(){
+  equalheight('.main article');
+});
