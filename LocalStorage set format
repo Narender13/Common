@@ -1,0 +1,45 @@
+
+bLocalStoreAvailable = !1;
+typeof Storage != "undefined" && (bLocalStoreAvailable = !0);
+window.bLogVerbose = !1;
+window.bLogDebug = !1;
+
+
+
+
+function LoadLocalItem(n) {
+    if (bLocalStoreAvailable) {
+        var t = localStorage.getItem(n);
+        return t != null ? (VerboseLog("Loaded item from localStorage: " + n), JSON.parse(t)) : null
+    }
+}
+
+function TrySaveLocalItem(n, t, i) {
+    try {
+        SaveLocalItem(n, t)
+    } catch (r) {
+        return DebugLog(i), ShowToastError(i), !1
+    }
+    return !0
+}
+
+function SaveLocalItem(n, t) {
+    bLocalStoreAvailable && $.isEmptyObject(t.ErrorMessage) && (localStorage.setItem(n, JSON.stringify(t)), VerboseLog("Saved item to localStorage: " + n))
+}
+
+function ClearLocalItem(n) {
+    VerboseLog("Removed item from localStorage: " + n);
+    localStorage.removeItem(n)
+}
+
+function ClearLocalItems() {
+    localStorage.clear();
+   
+}
+function VerboseLog(n) {
+    window.bLogVerbose && console.log(n)
+}
+
+function DebugLog(n) {
+    window.bLogDebug && console.log(n)
+}
