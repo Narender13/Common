@@ -1,0 +1,10 @@
+function SetupTooltips() {
+    $('[data-toggle="tooltip"]').tooltip({
+        container: "body",
+        trigger: "hover"
+    })
+}
+
+function HideTooltips() {
+    $('[data-toggle="tooltip"]').tooltip("hide")
+}
