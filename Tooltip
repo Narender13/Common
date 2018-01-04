@@ -8,3 +8,11 @@ function SetupTooltips() {
 function HideTooltips() {
     $('[data-toggle="tooltip"]').tooltip("hide")
 }
+
+function SetTooltip(n, t) {
+    n.setAttribute("data-toggle", "tooltip");
+    n.setAttribute("aria-hidden", "true");
+    n.setAttribute("data-placement", "bottom");
+    n.setAttribute("data-delay", '{"show":"500"}');
+    n.setAttribute("title", t)
+}
