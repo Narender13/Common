@@ -1,0 +1,10 @@
+function formatDate(n) {
+    var t = new Date(n),
+        f = t.getMonth() + 1,
+        e = t.getDate() < 10 ? "0" + t.getDate() : t.getDate(),
+        o = t.getFullYear(),
+        s = t.getHours() < 12 ? "AM" : "PM",
+        i, r, u;
+    return t.getHours() == 0 ? i = "12" : (i = t.getHours() > 12 ? t.getHours() - 12 : t.getHours(), i.length == 1 && (i = "0" + i)), r = t.getMinutes() < 10 ? "0" + t.getMinutes() : t.getMinutes(), u = t.getSeconds() < 10 ? "0" + t.getSeconds() : t.getSeconds(), f + "/" + e + "/" + o + " " + i + ":" + r + ":" + u + " " + s
+}
+alert(formatDate(1515045072856));
