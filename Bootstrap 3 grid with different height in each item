@@ -1,0 +1,38 @@
+
+<-------------------HTML---------------->
+<div class="container-fluid">
+    <div class="row equal">
+        <div class="equal-child col-xs-12 col-sm-6 col-md-3">
+            <div class="box" style="height:200px"></div>
+        </div>
+        <div class="equal-child col-xs-12 col-sm-6 col-md-3">
+            <div class="box" style="height:120px"></div>
+        </div>
+        <div class="equal-child col-xs-12 col-sm-6 col-md-3">
+            <div class="box" style="height:100px"></div>
+        </div>
+        <div class="equal-child col-xs-12 col-sm-6 col-md-3">
+            <div class="box"></div>
+        </div>
+        <div class="equal-child col-xs-12 col-sm-6 col-md-3">
+            <div class="box"></div>
+        </div>
+    </div>
+</div>
+<--------------------CSS-------------------->
+.box{
+    150px; 
+    height:150px; 
+    background-color:grey; 
+    margin:5px;       
+}
+
+.equal > .equal-child:nth-child(4n+1) {
+    clear: left;
+}
+
+@media (max-width: 768px) {
+    .equal > .equal-child:nth-child(2n+1) {
+        clear: left;
+    }
+}
