@@ -1,0 +1,101 @@
+  $(".uploadbutton").click(function () {
+        if ($("form[name='uploadFileForm']").valid()) {
+            // Checking whether FormData is available in browser  
+            if (window.FormData !== undefined) {
+
+                var fileUpload = $(".fileupload").get(0);
+                var files = fileUpload.files;
+
+                // Create FormData object  
+                var fileData = new FormData();
+
+                // Looping over all files and add it to FormData object  
+                for (var i = 0; i < files.length; i++) {
+                    fileData.append(files[i].name, files[i]);
+                }
+
+                var uploadType = $(".uploadbutton").attr("data-uploadtype");
+                $.ajax({
+                    url: '/Package/UploadFiles',
+                    type: "POST",
+                    contentType: false, // Not to set any content header  
+                    processData: false, // Not to process data  
+                    data: fileData,
+                    success: function (result) {
+                        if (result.success) {
+                            console.log(uploadType);
+                            appendNewAddedFile(result, uploadType);
+                            var $modalRef = $("#overlayUploadFile");
+                            $("[id^='caption']").val(""), $(".filename").text("No File Selected.");
+                            $modalRef.modal("hide");
+
+                        }
+                        else {
+                            alert(result.msg);
+                        }
+                    },
+                    error: function (err) {
+                        alert(err.statusText);
+                    }
+                });
+            } else {
+                alert("FormData is not supported.");
+            }
+        }
+        
+        
+        ============================================================
+        
+        
+        <div tabindex="-1" class="modal fade" id="overlayUploadFile" role="dialog" aria-hidden="true" aria-labelledby="smallModal">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">upload File</h4>
+            </div>
+            <div class="modal-body">
+                <div class="createRequestFormContainer">
+                    <div class="accountExecutiveEmail">
+                        <form name="uploadFileForm" id="uploadFile" role="form" novalidate="novalidate">
+                            <div class="col-sm-12 no-padding-horizontal">
+                                <div class="form-group">
+                                    <label for="fileCaption" class="bold-12">Caption</label>
+                                    <input name="fileCaption" type="text" id="caption" class="form-control custom-control light-12 ">
+                                    <p class=""></p>
+                                </div>
+                                <div class="form-group">
+                                    <span class="btn btn-success fileinput-button">
+                                        <i class="glyphicon glyphicon-plus"></i>
+                                        <span>Select file...</span>
+                                        <!-- The file input field used as target for the file upload widget -->
+                                        <input id="fileupload" type="file" name="photo" class="fileupload">
+                                    </span>
+                                    <div class="errorAfter"></div>
+                                    <br>
+                                    
+                                    <div class="form-group">
+                                        <p class="filename light-12 ">No File Selected.</p>
+                                        <br>
+                                        <br>
+                                        <!-- The global progress bar -->
+                                        <div id="progress" class="progress hide">
+                                            <div class="progress-bar progress-bar-success"></div>
+                                        </div>
+                                        <!-- The container for the uploaded files -->
+                                        <div id="files" class="files"></div>
+                                        <br>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer text-left">
+                <button class="btn btn-default buttonLightBlue" type="button" data-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary buttonPrimary uploadbutton" type="button" id="user_management">Upload</button>
+            </div>
+        </div>
+
+    </div>
+</div>
