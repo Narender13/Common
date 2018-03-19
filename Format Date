@@ -8,3 +8,20 @@ function formatDate(n) {
     return t.getHours() == 0 ? i = "12" : (i = t.getHours() > 12 ? t.getHours() - 12 : t.getHours(), i.length == 1 && (i = "0" + i)), r = t.getMinutes() < 10 ? "0" + t.getMinutes() : t.getMinutes(), u = t.getSeconds() < 10 ? "0" + t.getSeconds() : t.getSeconds(), f + "/" + e + "/" + o + " " + i + ":" + r + ":" + u + " " + s
 }
 alert(formatDate(1515045072856));
+
+
+<input type="text" id="datetimepicker-input"></input>
+var d = new Date();
+
+var month = d.getMonth()+1;
+var day = d.getDate();
+
+var output = d.getFullYear() + '/' +
+(month<10 ? '0' : '') + month + '/' +
+(day<10 ? '0' : '') + day;
+
+$("#datetimepicker-input").val(output + " 00:01:00");
+$('#startdatetime-from').datetimepicker({
+    language: 'en',
+    format: 'yyyy-MM-dd hh:mm'
+});
