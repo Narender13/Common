@@ -1,0 +1,14 @@
+function handdlePopup($modalref) {
+    var $modalIdRef = $modalref.closest(".modal").attr("id")
+    $("#" + $modalIdRef).modal("hide");
+    console.log("modal hide");
+    if ($('#addAdditionalPackages,#Clientview,#activityDetailPopupForEdit').is(':visible')) { primary modal ref
+        $("#" + $modalIdRef).on('hidden.bs.modal', function () {
+            $('body').addClass("modal-open")
+        })
+
+    }
+
+}
+
+handdlePopup($(this)) or button id
