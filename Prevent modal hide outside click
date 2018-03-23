@@ -1,0 +1,5 @@
+$("#addAdditionalPackages").modal({
+            show: false,
+            backdrop: 'static'
+        });
+        $("#addAdditionalPackages").modal('show');
