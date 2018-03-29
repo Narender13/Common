@@ -1,0 +1,41 @@
+<script type="text/javascript">
+    $(document).ready(function () {
+        $screensize = $(window).width();
+        console.log($screensize)
+        if ($screensize > 1200) {
+            $("#packageList > .clearfix").remove();
+            $('#packageList .item:nth-child(3n)').after('<span class="clearfix visible-lg"></span>');
+        }
+
+        if ($screensize >= 975) {
+            $("#packageList > .clearfix").remove();
+            $('#packageList .item:nth-child(3n)').after('<span class="clearfix visible-lg visible-md"></span>');
+        }
+        if ($screensize >= 768 && $screensize < 975) {
+            $("#packageList > .clearfix").remove();
+            $('#packageList .item:nth-child(2n)').after('<span class="clearfix visible-sm"></span>');
+        }
+        $(window).resize(function () {
+            $screensize = $(window).width();
+            if ($screensize > 1200) {
+                $("#packageList > .clearfix").remove();
+                $('#packageList .item:nth-child(3n)').after('<span class="clearfix visible-lg"></span>');
+            }
+       
+            if ($screensize >= 975) {
+                $("#packageList > .clearfix").remove();
+                $('#packageList .item:nth-child(3n)').after('<span class="clearfix visible-lg visible-md"></span>');
+            }
+            if ($screensize >= 768 && $screensize < 975) {
+                $("#packageList > .clearfix").remove();
+                $('#packageList .item:nth-child(2n)').after('<span class="clearfix visible-sm"></span>');
+            }  
+            
+            if ($screensize < 767) {
+                $("#packageList > .clearfix").remove();
+            }
+        });
+    });
+
+
+</script>
