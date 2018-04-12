@@ -1,0 +1,3 @@
+new-div.with-bounce {
+    -webkit-animation: bounce-left 1.5s ease 0s infinite normal;
+    /* animation: bounce-left 1.5s ease 0s infinite normal; */
