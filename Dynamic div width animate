@@ -1,0 +1,23 @@
+<div class="ExistingUserNuxProgressBar">
+<div class="eux_progress_block_complete"></div>
+
+</div>
+
+.ExistingUserNuxProgressBar {
+    height: 15px;
+    border-radius: 3px;
+    margin-bottom: 4px;
+    background: #eee
+    }
+   .eux_progress_block_complete{
+    width: 0%;
+    height: 100%;
+    float: left;
+    background-color: #8bc735
+    }
+    
+    
+  $(".eux_progress_block_complete").css({
+ "width": "80%",
+  "transition":"all 5s",
+  });
