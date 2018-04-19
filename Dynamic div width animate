@@ -1,6 +1,8 @@
 <div class="ExistingUserNuxProgressBar">
 <div class="eux_progress_block_complete"></div>
+<div class="percent">
 
+</div>
 </div>
 
 .ExistingUserNuxProgressBar {
@@ -20,4 +22,17 @@
   $(".eux_progress_block_complete").css({
  "width": "80%",
   "transition":"all 5s",
-  });
+  })
+  
+  Jquery
+  
+   var i= 0;
+  setInterval(function(){
+   if(i == 80){
+   return false;
+  }
+  i++
+  $(".eux_progress_block_complete").css("width",i+"%")
+  $(".percent").text(i+"%")
+  },100)
+  
