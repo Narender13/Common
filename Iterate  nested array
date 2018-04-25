@@ -1,0 +1,24 @@
+var list = {  
+   "universityLevelInstitution":[  
+      [  
+         "State Public University ",
+         342
+      ],
+      [  
+         "Central University ",
+         47
+      ],
+      [  
+         "State Private University ",
+         230
+      ],
+    
+      
+   ]
+}
+//console.log(list.universityLevelInstitution)
+for(i=0;i<list.universityLevelInstitution.length;i++){
+document.write(list.universityLevelInstitution[i][0],list.universityLevelInstitution[i][1]);
+//console.log(list.universityLevelInstitution[i][1]);
+
+}
