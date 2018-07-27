@@ -1,0 +1,73 @@
+
+import { DatePipe } from '@angular/common';
+ constructor(
+    private fb: FormBuilder,
+    public route: ActivatedRoute,
+    public router: Router,
+    public datepipe: DatePipe,
+   ){}
+
+
+transformToDate(value: string) {
+    let transformdate: string;
+    const date: Date = new Date();
+    if (value === 'Last3') {
+      date.setDate(date.getDate() - 3);
+    }
+    if (value === 'Last7') {
+      date.setDate(date.getDate() - 7);
+    }
+    if (value === 'Last31') {
+      date.setDate(date.getDate() - 31);
+    }
+    if (value === 'Last90') {
+      date.setDate(date.getDate() - 90);
+    }
+    if (value === 'Last365') {
+      date.setDate(date.getDate() - 365);
+    }
+    transformdate = this.datepipe.transform(date, 'MM-dd-yyyy');
+    return transformdate;
+  }
+
+ currentDate: string = this.datepipe.transform(new Date(), 'MM-dd-yyyy');
+
+
+regular expression for (999)999-9999
+^\(\d{3}\)\s{0,1}\d{3}-\d{4}$
+
+git 
+regualr expressipn for 55555-4444
+/^(\d{5}-\d{4}|\d{5})$/
+onkeyup="if(/\D/g.test(this.value))this.value = this.value.replace(/\D/g,'')"
+
+Git clone “repo URL” 
+Git branch (after moving to) <branchname>
+Git checkout branch
+Git pull origin branch name
+
+https://www.mediassistindia.net/MACP/Account
+
+
+
+http://w3processing.com/index.php?subMenuItemId=328
+https://jsfiddle.net/tm1e30jw/
+
+var rightnow = new Date();
+var backthen = new Date(2016,04,22);
+ if (rightnow > backthen)
+ {
+ alert('greater')
+ }
+ else
+ {
+alert('smaller')
+
+
+Source Tree
+ruby -
+compass - 
+sass-
+
+
+ }
