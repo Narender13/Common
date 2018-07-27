@@ -1,0 +1,186 @@
+import { Component, OnInit, Input } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { DatePipe } from '@angular/common';
+import { AutoUnsubscribe } from '../../shared/decorators/autounsubscribe';
+import { Configure } from '../../shared/decorators/configurable';
+import { FormGroup, FormControl } from '@angular/forms';
+
+@Component({
+  selector: 'app-filter',
+  templateUrl: './filter.component.html',
+  styles: []
+})
+
+@AutoUnsubscribe()
+@Configure('FilterComponent')
+export class FilterComponent implements OnInit {
+  config: any;
+  formFilter: FormGroup;
+  @Input() filters: any[];
+  @Input() autoApply = false;
+  showCustomRange = false;
+  currentDate: string = this.datepipe.transform(new Date(), 'MM-dd-yyyy');
+  preservedParams: any;
+  initialParams: any;
+  dateRange: any;
+  localized: any;
+  valueChecked = true;
+
+  constructor(
+    public route: ActivatedRoute,
+    public router: Router,
+    public datepipe: DatePipe) { }
+
+  ngOnInit() {
+    this.formFilter = new FormGroup({
+      daterange: new FormControl()
+    });
+    const params = this.route.snapshot.params;
+    if (this.initialParams !== null) {
+      this.initialParams = params;
+    }
+    this.preservedParams = Object.assign({}, this.preservedParams, params);
+    this.localized = this.config.translated;
+  }
+  selectOption(e: Event, filter: string, value: string) {
+    const params = {} as FilterParams & any;
+    if (filter === 'timespan' && value !== 'OTHER') {
+      const fromKey = 'from';
+      const toKey = 'to';
+      params[fromKey] = this.transformToDate(value);
+      params[toKey] = this.currentDate;
+    }
+
+    params[filter] = value;
+
+    // an "apply" button/action will be rendered, allowing application of all filters on apply.
+
+    if (!this.autoApply) {
+      e.stopPropagation();
+      this.preserveParams(params, filter);
+      return;
+    } else {
+      this.valueChanged(params);
+    }
+  }
+  transformToDate(value: string) {
+    let transformdate: string;
+    const date: Date = new Date();
+    if (value === 'Last3') {
+      date.setDate(date.getDate() - 3);
+    }
+    if (value === 'Last7') {
+      date.setDate(date.getDate() - 7);
+    }
+    if (value === 'Last31') {
+      date.setDate(date.getDate() - 31);
+    }
+    if (value === 'Last90') {
+      date.setDate(date.getDate() - 90);
+    }
+    if (value === 'Last365') {
+      date.setDate(date.getDate() - 365);
+    }
+    transformdate = this.datepipe.transform(date, 'MM-dd-yyyy');
+    return transformdate;
+  }
+
+  isSelected(filter: string, value: string) {
+    let params = this.route.snapshot.params;
+    if (!this.autoApply) {
+      params = this.preservedParams;
+    }
+    if (filter === 'timespan' && params[filter] === 'OTHER') {
+      this.showCustomRange = true;
+    }
+    return params.hasOwnProperty(filter) && params[filter].indexOf(value) > -1;
+  }
+
+  preserveParams(data: FilterParams, type: any) {
+    if (type !== 'timespan') {
+      if (this.preservedParams.hasOwnProperty(type) && this.preservedParams[type].indexOf(data[type]) < 0) {
+        data[type] = this.preservedParams[type] + ',' + data[type];
+      } else if (this.preservedParams.hasOwnProperty(type)) {
+        data[type] = this.preservedParams[type];
+      }
+    }
+    if (type === 'timespan' && data[type] === 'OTHER') {
+      delete this.preservedParams.from;
+      delete this.preservedParams.to;
+    }
+    this.preservedParams = Object.assign({}, this.preservedParams, data);
+  }
+
+  applyFilters() {
+    this.valueChanged(this.preservedParams);
+  }
+  resetFilters() {
+    this.preservedParams = {} as FilterParams;
+    const routeParams = Object.assign({}, this.initialParams, this.preservedParams);
+    const url = this.router.createUrlTree([routeParams], { relativeTo: this.route });
+    this.router.navigateByUrl(url);
+    this.showCustomRange = false;
+  }
+  getEnumerator(type: any) {
+    const keys = Object.keys(type);
+    return keys;
+  }
+
+  valueChanged(data: FilterParams) {
+    const routeParams = Object.assign({}, this.route.snapshot.params, data);
+    const url = this.router.createUrlTree([routeParams], { relativeTo: this.route });
+    this.router.navigateByUrl(url);
+  }
+}
+
+interface FilterParams {
+  productType: string;
+  qualificationType: string;
+  transactionType: string;
+  from: string;
+  to: string;
+  taxyear: string;
+  limit: string;
+  offset: string;
+  orderby: string;
+}
+
+
+<form [formGroup]="formFilter" class="filter-wrapper" *ngIf="filters">
+  <ng-container *ngFor="let f of getEnumerator(filters)">
+    <h6 class="dropdown-header mb-2">{{localized.labels[f]}}</h6>
+    <fieldset class="px-4" *ngIf="f!='timespan'">
+      <div class="form-group row mb-2" *ngIf="!autoApply">
+        <div class="form-check col-lg-6" *ngFor="let o of filters[f];let i=index">
+          <input class="form-check-input" id="enumerator{{i}}" type="checkbox" [value]="isSelected(f, o)" (click)="selectOption($event, f, o)">
+          <label for="enumerator{{i}}" class="form-check-label">{{localized.filters[o]}}</label>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="px-4" *ngIf="f=='timespan'">
+      <div class="form-group row mb-2" *ngIf="!autoApply">
+        <div class="form-check col-lg-6" *ngFor="let o of filters[f];let i=index">
+          <input class="form-check-input" id="timespan{{i}}" type="checkbox" [value]="isSelected(f, o)" (click)="selectOption($event, f, o);showCustomRange=o=='OTHER';">
+          <label for="timespan{{i}}" class="form-check-label">{{o | translate}}</label>
+        </div>
+      </div>
+      <div class="form-group row mb-2" *ngIf="showCustomRange==true">
+        <div class="col">
+          <div class="input-group">
+            <input type="date" class="form-control" (change)="selectOption($event,'from',$event.target.value)">
+            <span class="input-group-addon">{{'to' | translate}}</span>
+            <input type="date" class="form-control" (change)="selectOption($event,'to',$event.target.value)">
+          </div>
+        </div>
+      </div>
+    </fieldset>
+  </ng-container>
+  <div class="dropdown-divider"></div>
+  <ng-container *ngIf="!autoApply">
+    <fieldset class="px-4">
+      <button type="submit" class="btn btn-primary" (click)="applyFilters()">Apply</button>
+      <button type="reset" class="btn btn-secondary" (click)="resetFilters()">Reset</button>
+    </fieldset>
+  </ng-container>
+</form> 
