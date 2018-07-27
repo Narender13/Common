@@ -1,0 +1,1222 @@
+import { Component, OnInit, Input } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { FormGroup, FormBuilder } from '@angular/forms';
+import { ReportBuilderService, Report } from './shared/report-builder.service';
+import { DatePipe } from '@angular/common';
+
+import { Observable } from 'rxjs/Observable';
+import { share, tap, map } from 'rxjs/operators';
+import { ContractActivityService } from '../contract-activity/shared/contract-activity.service';
+import { ContractOwnerService } from '../contract-owner/shared/contract-owner.service';
+import { ContractAssetService } from '../contract-asset/shared/contract-asset.service';
+import { SurrenderService } from '../surrender/shared/surrender.service';
+import { PurchaseService, PurchaseType, PurchaseTimespan } from '../purchase/shared/purchase.service';
+import { PendingNewBusinessService } from '../pending-new-business/shared/pending-new-business.service';
+import { TerminatedContractService } from '../terminated-contract/shared/terminated-contract.service';
+import { Configure, Configurable } from '../shared/decorators/configurable';
+import { ToolbarActionHandlers, ToolbarActionable } from '../shared/services/toolbar-action-handler';
+import { UserService } from '../shared/services/user.service';
+import { MorningStarService } from '../morningstar/shared/morningstar.service';
+import { SavedReports, SavedReportCriteria, ReportType, UpdatedItemList } from '../shared/models/report-builder.model'
+
+
+@Component({
+  selector: 'app-report-builder',
+  templateUrl: './report-builder.component.html',
+  styleUrls: ['./report-builder.component.scss']
+})
+@Configure('ReportBuilderComponent')
+export class ReportBuilderComponent implements Configurable, OnInit, ToolbarActionable {
+  @Input() activeTool: string;
+  config: any;
+  count: Observable<number>;
+  format: string;
+  list: Observable<any[]>;
+  loading = false;
+  productTypeList: any[];
+  purchaseTimespanEnum: typeof PurchaseTimespan = PurchaseTimespan;
+  purchaseTypeEnum: typeof PurchaseType = PurchaseType;
+  qualificationTypeList: any[];
+  Report: typeof Report = Report;
+  reportBuilderForm: FormGroup;
+  reportName = true;
+  reportType: ReportType = new ReportType();
+  reportTypeList: any[];
+  request: any;
+  savedReports: SavedReports;
+  sortBy: any[];
+  sortOrder: any[];
+  toDate: any;
+  fromDate: any;
+  currentDate: string = this.datepipe.transform(new Date(), 'yyyy-MM-dd');
+  dateRange = false;
+  transactionList: any[];
+  filterTimeFields: any[];
+  purchaseType: any[];
+  morningstarList: any;
+  reportFormat: any[] = [
+    { name: 'PDF', value: 'pdf' },
+    { name: 'Excel', value: 'excel' },
+    { name: 'In Browser', value: 'inBrowser' }
+  ];
+  constructor(
+    private fb: FormBuilder,
+    public route: ActivatedRoute,
+    public router: Router,
+    public datepipe: DatePipe,
+    private service: ReportBuilderService,
+    private caService: ContractActivityService,
+    private contractAssetService: ContractAssetService,
+    private contractOwnerService: ContractOwnerService,
+    private terminatedContractService: TerminatedContractService,
+    private surrenderService: SurrenderService,
+    private pendingNewBusinessService: PendingNewBusinessService,
+    private purchaseService: PurchaseService,
+    private userService: UserService,
+    private morningStarService: MorningStarService
+  ) { }
+
+  ngOnInit() {
+    this.reportBuilderForm = this.fb.group({
+      reportStatus: 'newReport',
+      reportType: 'activity',
+      fromDate: null,
+      toDate: null,
+      sortBy: 'transactionDate',
+      sortOrder: 'Asc',
+      reportFormat: 'inBrowser',
+      reportName: '',
+      product: null,
+      morningstarStatus: 'Enrolled',
+      assetPerson: null,
+      purchaseType: 'contributing',
+      productList: this.fb.array([
+        this.fb.group({
+          ProductType: 'null',
+          ProductId: 'null',
+          status: false
+        })
+      ]),
+      transactionList: this.fb.array([
+        this.fb.group({
+          TransactionDescType: 'null',
+          TransactionId: 'null',
+          status: false
+        })
+      ]),
+      qualificationList: this.fb.array([
+        this.fb.group({
+          QualType: null,
+          status: false
+        })
+      ]),
+      mgdbyMorningstarList: this.fb.array([
+        this.fb.group({
+          mgdbyMorningstarType: 'All',
+          value: 'null',
+          status: false
+        })
+      ]),
+    });
+    this.productTypeList = this.service.getProductTypeList();
+    this.qualificationTypeList = this.service.getQualificationTypeList();
+    this.transactionList = this.service.getTransactionList();
+    this.reportTypeList = this.service.getReportypeList();
+    this.sortOrder = this.service.sortOptions.sortOrder;
+    this.morningstarList = this.service.getMorningstarOptions();
+    this.filterTimeFields = this.service.sortOptions.filterTimeFields;
+    this.purchaseType = this.service.sortOptions.purchaseType;
+
+    this.setCriteria(this.reportBuilderForm.get('reportType').value);
+    this.setListValue(this.productTypeList, 'productList');
+    this.setListValue(this.transactionList, 'transactionList');
+    this.setListValue(this.qualificationTypeList, 'qualificationList');
+    this.setListValue(this.morningstarList.morningstarOptions, 'mgdbyMorningstarList');
+    ToolbarActionHandlers.handle(this);
+
+    // Load saved reports
+    this.loadSavedReports();
+
+    this.reportBuilderForm.get('fromDate').valueChanges.subscribe(val => {
+      this.fromDate = val;
+    });
+    this.reportBuilderForm.get('toDate').valueChanges.subscribe(val => {
+      this.toDate = val;
+    });
+  }
+  setListValue(listItem, control) {
+    const list = listItem.map(item => this.fb.group(item));
+    const arrayList = this.fb.array(list);
+    this.reportBuilderForm.setControl(control, arrayList);
+  }
+  transformToDate(value: string) {
+    let transformdate: string;
+    const date: Date = new Date();
+    if (value === 'Last3') {
+      date.setDate(date.getDate() - 3);
+    }
+    if (value === 'Last7') {
+      date.setDate(date.getDate() - 7);
+    }
+    if (value === 'Last31') {
+      date.setDate(date.getDate() - 31);
+    }
+    if (value === 'Last90') {
+      date.setDate(date.getDate() - 90);
+    }
+    if (value === 'Last365') {
+      date.setDate(date.getDate() - 365);
+    }
+    transformdate = this.datepipe.transform(date, 'yyyy-MM-dd');
+    return transformdate;
+  }
+
+  displayCriteria(selectedItem: any) {
+    this.reportType = {
+      activity: false,
+      assetsByPerson: false,
+      bookofBusinessByProduct: false,
+      clientReport: false,
+      closedClientAccounts: false,
+      contributingAndNonContributing: false,
+      loansAndWithdrawalsAndSurrenders: false,
+      morningstar: false,
+      pendingContracts: false
+    };
+    this.reportType[selectedItem] = true;
+  }
+  setCriteria(reportType) {
+    const selectedReport = reportType;
+    this.displayCriteria(selectedReport);
+    this.sortBy = this.service.sortOptions[selectedReport];
+    this.reportBuilderForm.patchValue({ sortBy: this.sortBy[0].value });
+  }
+  changeCriteria(value: any) {
+    this.setCriteria(value);
+  }
+  setCriteriaName() {
+    this.reportName = !this.reportName;
+  }
+  updatedItemList(): UpdatedItemList {
+    const productTypeList = this.reportBuilderForm.controls.productList.value.filter(item => item.status === true)
+      .map(list => list.type);
+    const transactionList = this.reportBuilderForm.controls.transactionList.value.filter(item => item.status === true)
+      .map(list => list.type);
+    const qualificationTypeList = this.reportBuilderForm.controls.qualificationList.value.filter(item => item.status === true)
+      .map(list => list.type);
+    const mgdbyMorningstar = this.reportBuilderForm.controls.mgdbyMorningstarList.value.filter(item => item.status === true)
+      .map(list => list.type);
+    return {
+      productTypeList: productTypeList,
+      transactionList: transactionList,
+      qualificationTypeList: qualificationTypeList,
+      mgdbyMorningstarList: mgdbyMorningstar
+    };
+  }
+  runReport() {
+    const reportype = this.reportBuilderForm.get('reportType').value;
+    const reportFormat = this.reportBuilderForm.get('reportFormat').value;
+    this.request = this.reportRequest(reportype);
+    const sortOrder = this.request.sortOrder;
+    const orderBy = sortOrder ? this.request.sortBy + ' ' + sortOrder : this.request.sortBy;
+    if (reportFormat === Report.browser) {
+      this.runReportInBrowser(orderBy);
+    }
+    if (reportFormat === Report.excel) {
+      this.router.navigate([Report.reportBuilber],
+        { queryParams: { action: Report.export, type: Report.excel }, skipLocationChange: true });
+    }
+    if (reportFormat === Report.pdf) {
+      this.router.navigate([Report.reportBuilber],
+        { queryParams: { action: Report.export, type: Report.pdf }, skipLocationChange: true });
+
+    }
+  }
+  onExport(format: string): Observable<any> {
+    this.format = format;
+    this.loading = true;
+    const reportype = this.reportBuilderForm.controls.reportType.value;
+    if (reportype === Report.activity) {
+      return this.exportToExcel(this.caService);
+    }
+    if (reportype === Report.assetsByPerson) {
+      return this.exportToExcel(this.contractAssetService);
+    }
+    if (reportype === Report.clientReport) {
+      return this.exportToExcel(this.contractOwnerService);
+    }
+    if (reportype === Report.closedClientAccounts) {
+      return this.exportToExcel(this.terminatedContractService);
+    }
+    if (reportype === Report.surrenders) {
+      return this.exportToExcel(this.surrenderService);
+    }
+    if (reportype === Report.contracts) {
+      return this.exportToExcel(this.pendingNewBusinessService);
+    }
+    if (reportype === Report.contributions) {
+      return this.exportToExcel(this.purchaseService);
+    }
+    if (reportype === Report.morningstar) {
+      return this.exportToExcel(this.morningStarService);
+    }
+  }
+
+  exportToExcel(service) {
+    return service.export(this.format).pipe(
+      map(data => data),
+      tap(() => {
+        this.loading = false;
+      }),
+    );
+  }
+  runReportInBrowser(orderBy: string) {
+    this.loading = true;
+    if (this.request.reportType === Report.activity) {
+      this.getfiltereddata(this.caService, orderBy);
+    }
+    if (this.request.reportType === Report.assetsByPerson) {
+      this.getfiltereddata(this.contractAssetService, orderBy);
+    }
+    if (this.request.reportType === Report.clientReport) {
+      this.getfiltereddata(this.contractOwnerService, orderBy);
+    }
+    if (this.request.reportType === Report.closedClientAccounts) {
+      this.getfiltereddata(this.terminatedContractService, orderBy);
+    }
+    if (this.request.reportType === Report.surrenders) {
+      this.getfiltereddata(this.surrenderService, orderBy);
+    }
+    if (this.request.reportType === Report.contracts) {
+      this.getfiltereddata(this.pendingNewBusinessService, orderBy);
+    }
+    if (this.request.reportType === Report.contributions) {
+      this.getfiltereddata(this.purchaseService, orderBy);
+    }
+    if (this.request.reportType === Report.morningstar) {
+      this.getfiltereddata(this.morningStarService, orderBy);
+    }
+  }
+
+  getfiltereddata(service, sortByoption) {
+    this.count = service.count().pipe(share());
+    //cfg.limit = cfg.limit;
+    this.config.offset = 0;
+    this.config.orderby = sortByoption || this.config.orderby;
+    if (this.request.reportType === Report.contributions) {
+      this.config.purchaseType = PurchaseType.Contributing;
+      this.config.timespan = PurchaseTimespan.Days365;
+      this.list = service.list(this.config.purchaseType,
+        this.config.timespan, null, Math.pow(2, 10), this.config.offset, this.config.orderby).pipe(
+          map(data => data),
+          tap(() => {
+            this.loading = false;
+          }),
+          share()
+        );
+    }
+    if (this.request.reportType === Report.surrenders) {
+      this.list = service.list(null, Math.pow(2, 10),
+        this.config.offset, this.config.orderby, '365' /*this.config.daysAgo*/).pipe(
+          map(data => data),
+          tap(() => {
+            this.loading = false;
+          }),
+          share()
+        );
+    }
+    if (this.request.reportType === Report.morningstar) {
+      this.config.type = this.reportBuilderForm.controls.morningstarStatus.value || 'Enrolled';
+      this.list = service.list(this.config.type).pipe(
+        map(data => data),
+        tap(() => {
+          this.loading = false;
+        }),
+        share()
+      );
+    }
+    else {
+      this.list = service.list(null, Math.pow(2, 10), this.config.offset, this.config.orderby).pipe(
+        map(data => data),
+        tap(() => {
+          this.loading = false;
+        }),
+        share()
+      );
+    }
+  }
+  setTimePeriod(e: any, option?: any) {
+    if (e.target.value === 'dateRange') {
+      this.dateRange = true;
+    } else {
+      this.toDate = this.currentDate;
+      this.fromDate = this.transformToDate(option.value);
+      this.dateRange = false;
+    }
+  }
+
+  reportRequest(reportype: string): any {
+    let saveReportRequest = new SavedReportCriteria();
+    saveReportRequest = {
+      reportStatus: this.reportBuilderForm.get('reportStatus').value,
+      reportType: reportype,
+      sortBy: this.reportBuilderForm.get('sortBy').value || 'contractNumber',
+      reportFormat: this.reportBuilderForm.get('reportFormat').value,
+      reportName: this.reportBuilderForm.get('reportName').value,
+    };
+    switch (reportype) {
+      case Report.activity:
+        saveReportRequest.productTypeList = this.updatedItemList().productTypeList;
+        saveReportRequest.transactionTypeList = this.updatedItemList().transactionList;
+        saveReportRequest.sortOrder = this.reportBuilderForm.get('sortOrder').value;
+        saveReportRequest.fromDate = this.fromDate;
+        saveReportRequest.toDate = this.toDate;
+        break;
+      case Report.assetsByPerson:
+        saveReportRequest.productTypeList = this.updatedItemList().productTypeList;
+        saveReportRequest.qualificationTypeList = this.updatedItemList().qualificationTypeList;
+        saveReportRequest.mgdbyMorningstarList = this.updatedItemList().mgdbyMorningstarList;
+        saveReportRequest.product = this.reportBuilderForm.get('product').value;
+        saveReportRequest.sortOrder = this.reportBuilderForm.get('sortOrder').value;
+        saveReportRequest.assetPerson = this.reportBuilderForm.controls.assetPerson.value;
+        break;
+      case Report.clientReport:
+        saveReportRequest.productTypeList = this.updatedItemList().productTypeList;
+        break;
+      case Report.closedClientAccounts:
+      case Report.contracts:
+        saveReportRequest.sortOrder = this.reportBuilderForm.get('sortOrder').value;
+        saveReportRequest.fromDate = this.fromDate;
+        saveReportRequest.toDate = this.toDate;
+        break;
+      case Report.contributions:
+        saveReportRequest.productTypeList = this.updatedItemList().productTypeList;
+        saveReportRequest.sortOrder = this.reportBuilderForm.get('sortOrder').value;
+        saveReportRequest.purchaseType = this.reportBuilderForm.get('purchaseType').value;
+        saveReportRequest.fromDate = this.fromDate;
+        saveReportRequest.toDate = this.toDate;
+        break;
+      case Report.surrenders:
+        saveReportRequest.productTypeList = this.updatedItemList().productTypeList;
+        saveReportRequest.sortOrder = this.reportBuilderForm.get('sortOrder').value;
+        saveReportRequest.fromDate = this.fromDate;
+        saveReportRequest.toDate = this.toDate;
+        break;
+      case Report.morningstar:
+        saveReportRequest.status = this.reportBuilderForm.get('morningstarStatus').value;
+        saveReportRequest.sortOrder = this.reportBuilderForm.get('sortOrder').value;
+        break;
+      default:
+    }
+    return saveReportRequest;
+  }
+
+  loadSavedReports() {
+    console.log('loading saved reports');
+    const userPrefReports = this.userService.userPreferences.get('SavedReports');
+    console.log(userPrefReports);
+    if (userPrefReports) {
+      this.savedReports = JSON.parse(userPrefReports);
+    } else {
+      this.savedReports = new SavedReports();
+    }
+
+    console.log(` Save reports ${this.savedReports}`);
+  }
+  saveReport() {
+    this.activeTool = 'saveReport';
+    const reportype = this.reportBuilderForm.get('reportType').value;
+    let tmpReport = new SavedReportCriteria();
+    // tmpReport.reportName = "test";
+    const reports = this.reportRequest(reportype);
+    tmpReport = Object.assign({}, reports);
+    if (reportype === Report.bookofBusinessByProduct) {
+      tmpReport.productTypeList = this.updatedItemList().productTypeList;
+      tmpReport.sortOrder = this.reportBuilderForm.get('sortOrder').value;
+      tmpReport.fromDate = this.fromDate;
+      tmpReport.toDate = this.toDate;
+    }
+    this.savedReports.reports.push(tmpReport);
+    this.userService.setPreference({ SavedReports: JSON.stringify(this.savedReports) }).subscribe(e => {
+      console.log(e);
+      this.activeTool = null;
+      // this.reportBuilderForm.reset();
+    });
+
+  }
+
+  setCommonSavedReportPref(savedReport: any) {
+    this.reportBuilderForm.patchValue({ 'reportType': savedReport.reportType });
+    this.sortBy = this.service.sortOptions[savedReport.reportType];
+    if (savedReport.hasOwnProperty('sortBy')) {
+      this.reportBuilderForm.patchValue({ 'sortBy': savedReport.sortBy });
+    }
+    if (savedReport.hasOwnProperty('sortOrder')) {
+      this.reportBuilderForm.patchValue({ 'sortOrder': savedReport.sortOrder });
+    }
+    if (savedReport.hasOwnProperty('product')) {
+      this.reportBuilderForm.patchValue({ 'product': savedReport.product });
+    }
+    if (savedReport.hasOwnProperty('purchaseType')) {
+      this.reportBuilderForm.patchValue({ 'purchaseType': savedReport.purchaseType });
+    }
+    if (savedReport.hasOwnProperty('status')) {
+      this.reportBuilderForm.patchValue({ 'morningstarStatus': savedReport.status });
+    }
+    if (savedReport.hasOwnProperty('assetPerson')) {
+      this.reportBuilderForm.patchValue({ 'assetPerson': savedReport.assetPerson });
+    }
+    if (savedReport.hasOwnProperty('fromDate') && savedReport.hasOwnProperty('toDate')) {
+      this.reportBuilderForm.patchValue({ 'fromDate': savedReport.fromDate, 'toDate': savedReport.toDate });
+      this.dateRange = true;
+    }
+    this.displayCriteria(savedReport.reportType);
+  }
+  setSavedReportPref(savedReportVal: string) {
+    let savedReport = {} as any;
+    savedReport = this.savedReports.reports.find(
+      report => report.reportName === savedReportVal);
+    console.log(savedReport);
+    this.setCommonSavedReportPref(savedReport);
+    if (savedReport.hasOwnProperty('productTypeList') && savedReport.productTypeList.length) {
+      this.setsavedReortListPref(savedReport, this.productTypeList, 'productTypeList');
+      this.setListValue(this.productTypeList, 'productList');
+    }
+    if (savedReport.hasOwnProperty('transactionTypeList') && savedReport.transactionTypeList.length) {
+      this.setsavedReortListPref(savedReport, this.transactionList, 'transactionTypeList');
+      this.setListValue(this.transactionList, 'transactionList');
+    }
+    if (savedReport.hasOwnProperty('qualificationTypeList') && savedReport.qualificationTypeList.length) {
+      this.setsavedReortListPref(savedReport, this.qualificationTypeList, 'qualificationTypeList');
+      this.setListValue(this.qualificationTypeList, 'qualificationList');
+    }
+    if (savedReport.hasOwnProperty('mgdbyMorningstarList') && savedReport.mgdbyMorningstarList.length) {
+      this.setsavedReortListPref(savedReport, this.morningstarList.morningstarOptions, 'mgdbyMorningstarList');
+      this.setListValue(this.morningstarList.morningstarOptions, 'mgdbyMorningstarList');
+    }
+  }
+  setsavedReortListPref(savedReport: any, list: any[], type: string) {
+    list.forEach((d) => {
+      d.status = false;
+      savedReport[type].forEach((data) => {
+        if (d.type === data) {
+          d.status = true;
+        }
+      });
+    });
+  }
+} 
+
+
+<div class="card card-outline-primary">
+    <div class="card-block">
+        <form [formGroup]="reportBuilderForm">
+            <h2>{{'reportBuilder' | translate}}</h2>
+            <!--Report status part-->
+            <div class="form-group row">
+                <div class="col-md-2 mt-1">
+                    <label class="form-check-label pl-0">
+                        <div class="checkbox-widget">
+                            <input formControlName="reportStatus" value="newReport" type="radio">
+                            <span class="check"></span>
+                            <span class="select-label ml-1">{{'newReport' | translate}}</span>
+                        </div>
+                    </label>
+                </div>
+                <div class="col-md-2 mt-1">
+                    <label class="form-check-label pl-0">
+                        <div class="checkbox-widget">
+                            <input formControlName="reportStatus" value="savedReport" type="radio">
+                            <span class="check"></span>
+                            <span class="select-label ml-1">{{'savedReport' | translate}}</span>
+                        </div>
+                    </label>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-control" #saveReport (change)="setSavedReportPref(saveReport.value)" *ngIf="reportBuilderForm.value.reportStatus=='savedReport'">
+                        <option [selected]="true" value="null">{{'savedReportDefaultSelection' | translate}}</option>
+                        <option *ngFor="let option of savedReports.reports" [value]="option.reportName">{{option.reportName}}</option>
+                    </select>
+                </div>
+            </div>
+            <!--End of Report status part-->
+            <!--Report type part-->
+            <div class="card card-outline-primary">
+                <div class="card-block">
+                    <h2>{{'firstStep' | translate}}</h2>
+                    <small class="form-text text-muted">{{'chooseReport' | translate}}</small>
+                    <div class="form-group row mt-4">
+                        <div class="col-md-2">
+                            <label class="form-label mt-1" for="reportType">{{'reportType' | translate}}</label>
+                        </div>
+                        <div class="col-md-2" *ngIf="reportTypeList">
+                            <select class="form-control" formControlName="reportType" #reportTypeRef (change)="changeCriteria(reportTypeRef.value)">
+                                <option *ngFor="let option of reportTypeList" [value]="option.value">{{option.ReportType}}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--End of Report type part-->
+            <!--Report Criteria part-->
+
+            <div class="card card-outline-primary  mt-4">
+                <div class="card-block">
+                    <h2>{{'secondStep' | translate}}</h2>
+                    <!-- Criteria select person-->
+                    <div class="form-group row mt-4" *ngIf="reportType?.assetsByPerson">
+                        <div class="col-md-2">
+                            <label class="form-label mt-1" for="selectPerson">{{'personLabel' | translate}}</label>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-control" formControlName="assetPerson">
+                                <option value="" value="null">All</option>
+                            </select>
+                        </div>
+
+                    </div>
+                    <!-- End of criteria select person options-->
+                    <!--Purchase type criteria-->
+                    <div class="form-group row mt-4" *ngIf="reportType?.contributingAndNonContributing">
+                        <div class="col-md-2">
+                            <label class="form-label mt-1" for="selectPerson">{{'purchaseTypeLabel' | translate}}</label>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row mt-2">
+                                <div class="col-md-4" *ngFor="let option of purchaseType">
+                                    <div class="form-check">
+                                        <label class="form-check-label pl-0">
+                                            <div class="checkbox-widget">
+                                                <input type="radio" formControlName="purchaseType" value="{{option.value}}">
+                                                <span class="check"></span>
+                                                <span class="select-label ml-1">{{option.purchaseType}}</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- End of cPurchase type criteria-->
+                    <!--Criteria product type options-->
+                    <div class="form-group row mt-4" *ngIf="!reportType?.pendingContracts && !reportType?.morningstar && !reportType?.closedClientAccounts">
+                        <div class="col-md-2">
+                            <label class="form-label mt-1" for="">{{'productTypeLabel' | translate}}</label>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row mt-2" formArrayName="productList">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <label class="form-check-label pl-0">
+                                            <div class="checkbox-widget">
+                                                <input type="checkbox" value="all">
+                                                <span class="check"></span>
+                                                <span class="select-label ml-1">All</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6" *ngFor="let option of productTypeList;let i=index">
+                                    <div class="form-check" [formGroupName]="i">
+                                        <div class="form-check">
+                                            <label class="form-check-label pl-0">
+                                                <div class="checkbox-widget">
+                                                    <input type="checkbox" [value]="option.type" formControlName="status">
+                                                    <span class="check"></span>
+                                                    <span class="select-label ml-1">{{option.type}}</span>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <!--End of Criteria product type options-->
+                    <!--Criteria transaction type options-->
+                    <div class="form-group row mt-4" *ngIf="reportType.activity">
+                        <div class="col-md-2">
+                            <label class="form-label mt-1" for="transaction">{{'transactionTypeLabel' | translate}}</label>
+                        </div>
+                        <div class="col-md-6" formArrayName="transactionList">
+                            <div class="row mt-2">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <label class="form-check-label pl-0">
+                                            <div class="checkbox-widget">
+                                                <input type="checkbox" value="all">
+                                                <span class="check"></span>
+                                                <span class="select-label ml-1">All</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6" *ngFor="let option of transactionList;let i=index">
+                                    <div class="form-check">
+                                        <div class="form-check" [formGroupName]="i">
+                                            <label class="form-check-label pl-0">
+                                                <div class="checkbox-widget">
+                                                    <input type="checkbox" value="{{option.type}}" formControlName="status">
+                                                    <span class="check"></span>
+                                                    <span class="select-label ml-1">{{option.type}}</span>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <!--End of criteria transaction type options-->
+                    <!--Criteria qualification type options-->
+                    <div class="form-group row mt-4" *ngIf="reportType.assetsByPerson">
+                        <div class="col-md-2">
+                            <label class="form-label mt-1" for="selectPerson">{{'qualificationTypelabel' | translate }}</label>
+                        </div>
+                        <div class="col-md-9" formArrayName="qualificationList">
+                            <div class="row mt-2">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <label class="form-check-label pl-0">
+                                            <div class="checkbox-widget">
+                                                <input type="checkbox" value="all">
+                                                <span class="check"></span>
+                                                <span class="select-label ml-1">All</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4" *ngFor="let option of qualificationTypeList;let i=index">
+                                    <div class="form-check" [formGroupName]="i">
+                                        <label class="form-check-label pl-0">
+                                            <div class="checkbox-widget">
+                                                <input type="checkbox" value="{{option.type}}" formControlName="status">
+                                                <span class="check"></span>
+                                                <span class="select-label ml-1">{{option.type}}</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                    <!--Criteria morningstar type options-->
+                    <div class="form-group row mt-4" *ngIf="reportType.assetsByPerson">
+                        <div class="col-md-2">
+                            <label class="form-label mt-1" for="selectPerson">{{'manageMorningstarLabel' | translate}}</label>
+                        </div>
+                        <div class="col-md-3" formArrayName="mgdbyMorningstarList">
+                            <div class="row mt-2">
+                                <div class="col-md-4" *ngFor="let option of morningstarList.morningstarOptions;let i = index;">
+                                    <div class="form-check" [formGroupName]="i">
+                                        <label class="form-check-label pl-0">
+                                            <!--<input type="checkbox" formControlName="status" class="form-check-input" value="{{option.value}}">{{option.mgdbyMorningstarType}}-->
+                                            <div class="checkbox-widget">
+                                                <input type="checkbox" value="{{option.type}}" formControlName="status">
+                                                <span class="check"></span>
+                                                <span class="select-label ml-1">{{option.type}}</span>
+                                            </div>
+
+                                        </label>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                    <!--End of criteria morningstar type options-->
+                    <!--Criteria product options -->
+                    <div class="form-group row mt-4" *ngIf="reportType.assetsByPerson">
+                        <div class="col-md-2">
+                            <label class="form-label mt-1" for="sortby">{{'product' | translate}}</label>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-control" formControlName="product">
+                                <option *ngFor="let option of product" value="{{option.value}}">{{option.name}}</option>
+                            </select>
+                        </div>
+
+                    </div>
+                    <!--End of product options -->
+                    <!--Criteria time period options-->
+                    <div class="form-group row mt-4" *ngIf="!reportType?.clientReport && !reportType?.morningstar && !reportType?.assetsByPerson">
+                        <div class="col-md-2">
+                            <label class="form-label mt-1" for="timePeriod">{{'timePeriodlabel' | translate}}</label>
+                        </div>
+                        <div class="col-md-10">
+                            <div class="row mt-2">
+                                <div class="col-md-3" *ngFor="let option of filterTimeFields">
+                                    <div class="form-check">
+                                        <!-- <label class="form-check-label" for="">
+                                            <input type="radio" class="form-check-input" (change)=setTimePeriod(option) name="time" value="">{{option.name}}
+                                        </label> -->
+                                        <label class="form-check-label pl-0">
+                                            <div class="checkbox-widget">
+                                                <input (change)=setTimePeriod($event,option) name="time" value="option.value" type="radio">
+                                                <span class="check"></span>
+                                                <span class="select-label ml-1">{{option.name}}</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <label class="form-check-label pl-0">
+                                            <div class="checkbox-widget">
+                                                <input (change)=setTimePeriod($event) [checked]='dateRange' name="time" value="dateRange" type="radio">
+                                                <span class="check"></span>
+                                                <span class="select-label ml-1">Date Range</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <ng-container  *ngIf="dateRange">
+                                <div class="col-md-4">
+                                    <div class="form-inline">
+                                        <label for="">{{'timeStart' | translate}}
+                                            <input type="date" formControlName="fromDate" class="form-control ml-1" value="">
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-inline">
+                                        <label for="">{{'timeEnd' | translate}}
+                                            <input type="date" formControlName="toDate" class="form-control ml-1" value="">
+                                        </label>
+                                    </div>
+                                </div>
+                                </ng-container>
+                            </div>
+                        </div>
+
+                    </div>
+                    <!--End of criteria time period options-->
+                    <!--Criteria morningstar type options-->
+                    <div class="form-group row mt-4" *ngIf="reportType?.morningstar">
+                        <div class="col-md-2">
+                            <label class="form-label mt-1" for="selectPerson">{{'morningstarStatus' | translate}}</label>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row mt-2">
+                                <div class="col-md-12" *ngFor="let option of morningstarList.morningstarStatusList">
+                                    <div class="form-check">
+                                        <label class="form-check-label pl-0">
+                                            <div class="checkbox-widget">
+                                                <input type="radio" formControlName="morningstarStatus" value="{{option.value}}">
+                                                <span class="check"></span>
+                                                <span class="select-label ml-1">{{option.name}}</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                    <!--End of criteria morningstar type options-->
+                    <!--Criteria sort by options-->
+                    <div class="form-group row mt-4" *ngIf="!reportType?.bookofBusinessByProduct">
+                        <div class="col-md-2">
+                            <label class="form-label mt-1" for="sortby">{{'orderBy' | translate}}</label>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-control" formControlName="sortBy">
+                                <option *ngFor="let option of sortBy" value="{{option.value}}">{{option.name}}</option>
+                            </select>
+                        </div>
+
+                    </div>
+                    <!--End of sort by options -->
+                    <!--Criteria sort  order options-->
+                    <div class="form-group row mt-4" *ngIf="!reportType?.clientReport">
+                        <div class="col-md-2">
+                            <label class="form-label mt-1" for="sorOrder">{{'sortOrder' | translate}}</label>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-control" formControlName="sortOrder">
+                                <option *ngFor="let option of sortOrder" value="{{option.value}}">{{option.name}}</option>
+                            </select>
+                        </div>
+
+                    </div>
+                    <!--End of criteria sort order options-->
+                    <!--exchange-->
+                    <div class="form-group row mt-4" *ngIf="reportType?.contributingAndNonContributing">
+                        <div class="col-md-2">
+                            <label class="form-label mt-1" for="selectPerson"></label>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="row mt-2">
+                                <div class="col-md-12">
+                                    <div class="form-check">
+                                        <label class="form-check-label pl-0">
+                                            <div class="checkbox-widget">
+                                                <input type="checkbox" value="excludeZeroAccounts">
+                                                <span class="check"></span>
+                                                <span class="select-label ml-1">{{'excludeZeroAccountsLabels' | translate }}</span>
+                                            </div>
+                                        </label>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                    <!--end of exchange-->
+                </div>
+            </div>
+
+            <!--End of Report Criteria part-->
+            <!--Report format options-->
+            <div class="card card-outline-primary mt-4">
+                <div class="card-block">
+                    <h2>{{'thirdStep' | translate}}</h2>
+                    <div class="form-group row mt-4">
+                        <div class="col-md-2" *ngFor="let option of reportFormat">
+                            <div class="form-check">
+                                <label [ngStyle]="{'pointer-events': option.value == 'pdf' ? 'none' :'','opacity': option.value == 'pdf' ? '.3' : ''}" class="form-check-label pl-0">
+                                    <div class="checkbox-widget">
+                                        <input type="radio" formControlName="reportFormat" value="{{option.value}}">
+                                        <span class="check"></span>
+                                        <span class="select-label ml-1">{{option.name}}</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--End of report format options-->
+            <!--Report Criteria name-->
+            <div class="form-group row mt-4">
+                <div class="col-md-5">
+                    <div class="form-inline">
+                        <label class="form-check-label pl-0">
+                            <div class="checkbox-widget">
+                                <input type="checkbox" #reportCriteriaName (change)="setCriteriaName()" value="excludeZeroAccounts">
+                                <span class="check"></span>
+                                <span class="select-label ml-1">{{'reportCriteria' | translate}}</span>
+                            </div>
+                        </label>
+                        <input type="text" formControlName="reportName" [attr.disabled]="reportName?'':null" class="form-control ml-1">
+                    </div>
+                </div>
+
+            </div>
+            <!--End of report Criteria name-->
+            <!--Report button group-->
+            <div class="form-group row mt-4 ">
+                <div class="col-md-6 text-center">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary" (click)="saveReport()">
+                            <span *ngIf="!activeTool">{{'button-labels.saveReport' | translate}}</span>
+                            <span *ngIf="activeTool == 'saveReport'" class="align-middle">
+                                <i class="async-busy"></i>
+                            </span>
+                        </button>
+                        <button type="button" class="btn btn-primary  ml-3" (click)="runReport()">
+                            <span *ngIf="!loading">{{'button-labels.reunReport' | translate}}</span>
+                            <span *ngIf="loading" class="align-middle">
+                                <i class="async-busy"></i>
+                            </span>
+                        </button>
+                        <!-- <a class="btn btn-primary  ml-3" routerLink="./" [queryParams]="{action:'export'}" skipLocationChange>{{'button-labels.reunReport' | translate}}
+                        </a> -->
+                        <button type="button" class="btn btn-primary  ml-3">{{'button-labels.cancelReport' | translate}}</button>
+                    </div>
+                </div>
+
+            </div>
+            <!--End of report button group-->
+        </form>
+        <!--End of report form-->
+    </div>
+    <!--End of parent card-block -->
+    <!--Show filtered activity-->
+    <ng-container *ngIf="request?.reportFormat =='inBrowser'">
+        <div class="card card-table" *ngIf="request?.reportType === 'activity'">
+            <div class="card-block">
+                <h2 class="card-header">{{'Contract Activity' | translate}}</h2>
+                <table class="table table-striped table-hover">
+                    <caption *ngIf="loading">
+                        <app-busy></app-busy>
+                    </caption>
+                    <caption *ngIf="(count | async) == 0">{{'emptyResult' | translate}}</caption>
+                    <thead class="thead-default">
+                        <tr>
+                            <th>{{'contractId' | translate}}</th>
+                            <th>{{'personName' | translate}}</th>
+                            <th>{{'transactionDate' | translate}}</th>
+                            <th>{{'transactionType' | translate}}</th>
+                            <th>{{'units' | translate}}</th>
+                            <th class="text-right">{{'grossAmount' | translate}}</th>
+                        </tr>
+                    </thead>
+                    <tbody [hidden]="loading" *ngIf="(list | async) as items">
+                        <tr *ngFor="let activity of items" [routerLink]="['/contracts', activity.contractId]">
+                            <td>{{activity.contractNumber}}</td>
+                            <td>{{activity.personName}}</td>
+                            <td>{{activity.transactionDate | zulu}}</td>
+                            <td>{{activity.transactionDescription}}</td>
+                            <td> {{activity.units}}</td>
+                            <td class="text-right text-fixed">{{activity.grossAmount | usd}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- ens of activity grid-->
+        <div class="card card-table" *ngIf="request?.reportType === 'assetsByPerson'">
+            <div class="card-block">
+                <h2 class="card-header">{{'ContractAssetGridComponent' | translate}}</h2>
+                <table class="table table-striped table-hover">
+                    <caption *ngIf="loading">
+                        <app-busy></app-busy>
+                    </caption>
+                    <caption *ngIf="(count | async) == 0">{{'emptyResult' | translate}}</caption>
+                    <thead class="thead-default">
+                        <tr>
+                            <th>{{'contractNumber' | translate}}</th>
+                            <th>{{'personName' | translate}}</th>
+                            <th>{{'productName' | translate}}
+                                <br>{{'fundName' | translate}}</th>
+                            <th>{{'qualificationType' | translate}}</th>
+                            <th class="text-right">{{'cashValue' | translate}}</th>
+                        </tr>
+                    </thead>
+                    <tbody [hidden]="loading" *ngIf="(list | async) as items">
+                        <tr *ngFor="let contract of items" [routerLink]="['/contracts', contract.id]">
+                            <td>{{contract.contractNumber}}</td>
+                            <td class="text-nowrap">{{contract.personName}}</td>
+                            <td>
+                                <h4>
+                                    {{contract.productName | translate}}
+                                </h4>{{contract.fundName | translate}}</td>
+                            <td>{{contract.qualificationType | translate}}</td>
+                            <td class="text-right text-fixed">{{contract.cashValue | usd}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- ens of contract asset grid-->
+        <div class="card card-table" *ngIf="request?.reportType === 'clientReport'">
+            <div class="card-block">
+                <h2 class="card-header">CLIENT REPORT</h2>
+                <table class="table table-striped table-hover">
+                    <caption *ngIf="loading">
+                        <app-busy></app-busy>
+                    </caption>
+                    <caption *ngIf="(count | async) == 0">{{'emptyResult' | translate}}</caption>
+                    <thead class="thead-default">
+                        <tr>
+                            <th>{{'accountNumber' | translate}}</th>
+                            <th>{{'personName' | translate}}</th>
+                            <th>{{'taxIdLabel' | translate}}</th>
+                            <th>{{'address' | translate}}</th>
+                            <th>{{'dateOfBirth' | translate}}</th>
+                            <th>{{'value' | translate}}</th>
+                            <th>{{'type' | translate}}</th>
+                            <th>{{'productName' | translate}}</th>
+                        </tr>
+                    </thead>
+                    <tbody [hidden]="loading" *ngIf="(list | async) as items">
+                        <tr *ngFor="let contract of items" [routerLink]="['/contracts', contract.id]">
+                            <td>{{contract.contractNumber}}</td>
+                            <td>{{contract.personName}}</td>
+                            <td>
+                                <ng-container *ngIf="contract.taxIdLast4 as taxId; else taxIdNa">{{'taxId' | translate:{'taxId':taxId} }}</ng-container>
+                                <ng-template #taxIdNa>{{ 'undefined' | translate }}</ng-template>
+                            </td>
+                            <td>{{contract.address}}
+                                <br/> {{contract.city}}, {{contract.state}} {{contract.zip}}</td>
+                            <td>
+                                <ng-container *ngIf="contract.birthYear as birthYear; else birthYearNa">{{'birthYear' | translate:{'birthYear':birthYear} }}</ng-container>
+                                <ng-template #birthYearNa>{{ 'undefined' | translate }}</ng-template>
+                            </td>
+                            <td>{{contract.cashValue | usd}}</td>
+                            <td>{{contract.qualificationType | translate}}</td>
+                            <td>{{contract.productName | translate}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!--end of client report-->
+        <div class="card" *ngIf="request?.reportType === 'closedClientAccounts'">
+            <div class="card-block">
+                <ul class="list-group list-group-flush list-group-striped">
+                    <h2 class="card-header">{{'terminatedContracts' | translate}}</h2>
+                    <li class="list-group-heading">
+                        <div class="chip">
+                            <div class="chip-title">{{'personName' | translate}}</div>
+                            <div class="chip-subtitle">{{'contractNumber' | translate}}</div>
+                            <div class="chip-text">{{'issueDate' | translate}}</div>
+                            <div class="chip-text">{{'terminationDate' | translate}}</div>
+                        </div>
+                    </li>
+                    <caption *ngIf="(count | async) == 0">{{'emptyResult' | translate}}</caption>
+                    <caption *ngIf="loading">
+                        <app-busy></app-busy>
+                    </caption>
+                    <ng-container>
+                        <div [hidden]="loading" *ngIf="(list | async) as items">
+                            <a *ngFor="let contract of items" class="list-group-item list-group-item-action" [routerLink]="['/contracts', contract.id]">
+                                <div class="chip">
+                                    <h4 class="chip-title">{{contract.personName}}</h4>
+                                    <div class="chip-subtitle">{{contract.contractNumber}}</div>
+                                    <div class="chip-text">{{contract.issueDate | zulu}}</div>
+                                    <div class="chip-text">{{contract.terminationDate | zulu}}</div>
+                                </div>
+                            </a>
+                        </div>
+                    </ng-container>
+                </ul>
+            </div>
+        </div>
+        <!--End of closed client accounts-->
+        <div class="card card-table" *ngIf="request?.reportType === 'loansAndWithdrawalsAndSurrenders'">
+            <h2 class="card-header">{{'surrenders' | translate}}</h2>
+            <table class="table table-striped table-hover">
+                <caption *ngIf="loading">
+                    <app-busy></app-busy>
+                </caption>
+                <caption *ngIf="(count | async) == 0">{{'emptyResult' | translate}}</caption>
+                <thead class="thead-default">
+                    <tr>
+                        <th>{{'contractId' | translate}}</th>
+                        <th>{{'personName' | translate}}</th>
+                        <th>{{'transactionDate' | translate}}</th>
+                        <th>{{'transactionType' | translate}}</th>
+                        <th>{{'payeeName' | translate}}</th>
+                        <th>{{'grossAmount' | translate}}</th>
+                        <th>{{'netAmount' | translate}}</th>
+                    </tr>
+                </thead>
+                <tbody [hidden]="loading" *ngIf="(list | async) as items">
+                    <tr *ngFor="let surrender of items" [routerLink]="['/contracts', surrender.contractId]">
+                        <td>{{surrender.contractNumber}}</td>
+                        <td>{{surrender.personName}}</td>
+                        <td>{{surrender.transactionDate | zulu}}</td>
+                        <td>{{surrender.transactionType}}</td>
+                        <td>{{surrender.payeeName}}</td>
+                        <td>{{surrender.grossAmount | usd}}</td>
+                        <td>{{surrender.netAmount | usd}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!--End of surrender-->
+        <div class="card card-table" *ngIf="request?.reportType === 'pendingContracts'">
+            <div class="card-block">
+                <h2 class="card-header">{{'pendingNewBusiness' | translate}}</h2>
+                <table class="table table-striped table-hover">
+                    <caption *ngIf="loading">
+                        <app-busy></app-busy>
+                    </caption>
+                    <caption *ngIf="(count | async) == 0">{{'emptyResult' | translate}}</caption>
+                    <thead class="thead-default">
+                        <tr>
+                            <th>{{'personName' | translate}}</th>
+                            <th>{{'contractId' | translate}}</th>
+                            <th>{{'applicationDate' | translate}}</th>
+                            <th>{{'contractStatus' | translate}}</th>
+                            <th>{{'paymentsApplied' | translate}}</th>
+                            <th>{{'paymentsExpected' | translate}}</th>
+                        </tr>
+                    </thead>
+                    <tbody [hidden]="loading" *ngIf="(list | async) as items">
+                        <tr *ngFor="let contract of items" [routerLink]="['/pending-contracts',contract.id]">
+                            <td>{{contract.personName | translate}}</td>
+                            <td>{{contract.contractNumber | translate}}</td>
+                            <td>{{contract.applicationDate |zulu}}</td>
+                            <td>
+                                <app-pending-contract-status [contract]="contract" size="sm"></app-pending-contract-status>
+                            </td>
+                            <td>{{contract.paymentsApplied | usd}}</td>
+                            <td>{{contract.paymentsExpected | usd}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!--End of pending contracts-->
+        <div class="card card-table" *ngIf="request?.reportType === 'contributingAndNonContributing'">
+            <div class="card-block">
+                <h2 class="card-header">
+                    {{purchaseTypeEnum[config.purchaseType] | translate}} {{'PurchaseGridComponent' | translate}} in {{purchaseTimespanEnum[config.timespan]
+                    | translate}}
+                </h2>
+                <table class="table table-striped table-hover">
+                    <caption *ngIf="loading">
+                        <app-busy></app-busy>
+                    </caption>
+                    <caption *ngIf="(count | async) == 0">{{'emptyResult' | translate}}</caption>
+                    <thead class="thead-default">
+                        <tr>
+                            <th>{{'contractId' | translate}}</th>
+                            <th>{{'personName' | translate}}</th>
+                            <th>{{'productName' | translate}}</th>
+                            <ng-container *ngIf="config.purchaseType == purchaseTypeEnum.Contributing">
+                                <th>{{'transactionDate' | translate}}</th>
+                                <th class="text-right">{{'grossAmount' | translate}}</th>
+                            </ng-container>
+                        </tr>
+                    </thead>
+                    <tbody [hidden]="loading" *ngIf="(list | async) as items">
+                        <tr *ngFor="let purchase of items" [routerLink]="['/contracts', purchase.contractId]">
+                            <td>{{purchase.contractNumber}}</td>
+                            <td>{{purchase.personName}}</td>
+                            <td>{{purchase.productName | translate}}</td>
+                            <ng-container *ngIf="config.purchaseType == purchaseTypeEnum.Contributing">
+                                <td>{{purchase.transactionDate | zulu}}</td>
+                                <td class="text-right text-fixed">{{purchase.grossAmount | usd}}</td>
+                            </ng-container>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!--end of purchases-->
+        <!--morninhStar-->
+        <div class="card card-table card-block" *ngIf="request?.reportType === 'morningstar'">
+            <h2 class="card-header">
+                {{config.type | translate}} - {{'Morningstar' | translate}}
+            </h2>
+            <table class="table table-striped table-hover">
+                <caption *ngIf="loading">
+                    <app-busy></app-busy>
+                </caption>
+                <caption *ngIf="(count | async) == 0">{{'emptyResult' | translate}}</caption>
+                <thead class="thead-default">
+                    <tr>
+                        <th>{{'contractNumber' | translate}}</th>
+                        <th>{{'personName' | translate}}</th>
+                        <th>{{'electronicTransaction' | translate}}</th>
+                        <th class="text-right">{{'value' | translate}}</th>
+                    </tr>
+                </thead>
+                <tbody [hidden]="loading" *ngIf="(list | async) as items">
+                    <tr *ngFor="let item of items">
+                        <td>{{item.contractNumber}}</td>
+                        <td>{{item.personName}}</td>
+                        <td>{{item.electronicAuthorization}}</td>
+                        <td class="text-right text-fixed">{{item.contractValue | usd}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!--end of morningstar-->
+    </ng-container>
+</div>
+<!--End of parent card -->
