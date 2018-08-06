@@ -1,0 +1,48 @@
+
+
+import { DatePipe } from '@angular/common';
+public datepipe: DatePipe,
+
+
+transformToAndFromDate(value: string): any {
+    const transformToAndFromDate = {} as any;
+    const date: Date = new Date();
+    if (value === 'LastMonth') {
+      const startDate = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+      const endDate = new Date(date.getFullYear(), date.getMonth(), 0);
+      transformToAndFromDate.startDate = this.datepipe.transform(startDate, 'yyyy-MM-dd');
+      transformToAndFromDate.endDate = this.datepipe.transform(endDate, 'yyyy-MM-dd');
+
+    }
+    if (value === 'LastQuarter') {
+      const quarter = Math.floor((date.getMonth() / 3));
+      /* firstDate = new Date(now.getFullYear(), quarter * 3, 1 for current quarter */
+      const startDate = new Date(date.getFullYear(), quarter * 3 - 3, 1);
+      const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 3, 0);
+      transformToAndFromDate.startDate = this.datepipe.transform(startDate, 'yyyy-MM-dd');
+      transformToAndFromDate.endDate = this.datepipe.transform(endDate, 'yyyy-MM-dd');
+    }
+    return transformToAndFromDate;
+  };
+  
+   transformToDate(value: string) {
+    let transformdate: string;
+    const date: Date = new Date();
+    if (value === 'Last1') {
+      date.setDate(date.getDate() - 1);
+    }
+    if (value === 'Last7') {
+      date.setDate(date.getDate() - 7);
+    }
+    if (value === 'Last31') {
+      date.setDate(date.getDate() - 31);
+    }
+    if (value === 'Last90') {
+      date.setDate(date.getDate() - 90);
+    }
+    if (value === 'Last365') {
+      date.setDate(date.getDate() - 365);
+    }
+    transformdate = this.datepipe.transform(date, 'yyyy-MM-dd');
+    return transformdate;
+  }
