@@ -1,0 +1,1 @@
+[ngStyle]="{'pointer-events': option.value == 'pdf' ? 'none' :'','opacity': option.value == 'pdf' ? '.3' : ''}"
