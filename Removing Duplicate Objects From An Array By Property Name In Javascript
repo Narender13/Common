@@ -1,0 +1,15 @@
+removeDuplicates(arr, prop): any {
+    const obj = {};
+    for (let i = 0, len = arr.length; i < len; i++) {
+      if (!obj[arr[i][prop]]) {
+        obj[arr[i][prop]] = arr[i];
+      }
+    }
+
+    const newArr = [];
+    for (let key in obj) {
+      newArr.push(obj[key])
+    };
+    console.log(newArr);
+    return newArr;
+  }
