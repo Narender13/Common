@@ -1,0 +1,55 @@
+your data
+
+export const CERTIFICATES: Certificate[] = [
+    { serie: '1050 AJ', ident: 'Fe', moy_certified: 0.297 },
+    { serie: '1050 AJ', ident: 'Cu', moy_certified: 0.04 },
+    { serie: '1050 AJ', ident: 'Mn', moy_certified: 0.0374 }, 
+    { serie: 'X332.0 AC', ident: 'V', moy_certified: 0.019 },
+    { serie: 'X4002 AA', ident: 'Mn', moy_certified: 0.037 }
+];
+
+
+import { CERTIFICATES } from './certificate';
+
+
+class AppComponent {
+  //Todo...
+
+  objectKey(obj) {
+    return Object.keys(obj);
+  }
+
+  formatedCerts() {
+      return CERTIFICATES.reduce((prev, now) => {
+        if (!prev[now.serie]) {
+          prev[now.serie] = [];
+        }
+
+        prev[now.serie].push(now);
+        return prev;
+      }, {});
+
+    /*
+       Now your data : { "1050 AJ": [ .... ], "X332.0 AC": [...], ... }
+    */
+
+  }
+
+}
+
+
+
+<ul class="cert-result">
+      <li *ngFor="let key of objectKey(formatedCerts())">
+        <span>{{key}}</span>
+        <table>
+          <tr>
+            <th>Élément</th>
+            <th>Moy. Certifiée</th>
+          </tr>
+          <tr *ngFor="let certificate of formatedCerts()[key]">
+            <td>{{certificate.ident}}</td>
+            <td>{{certificate.moy_certifiee}}</td>
+          </tr>
+    </table>
+      </li>
