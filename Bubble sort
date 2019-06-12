@@ -1,0 +1,25 @@
+ function bubbleSort(numberList:number[]): number[] {
+        if (numberList) {
+            let listToSort = angular.copy(numberList);
+
+            let i = 0, j = 0, len = listToSort.length, currentValue = 0, nextValue=0, swapped = false;
+
+            for (i=0; i < len; i++){
+                swapped = false;
+                for (j=0; j < len-1; j++) {
+                    currentValue = listToSort[j];
+                    nextValue = listToSort[j + 1];
+                    if (currentValue > nextValue) {  /* compare the adjacent elements */
+                        listToSort[j] = nextValue;   /* swap them */
+                        listToSort[j + 1] = currentValue;
+                        swapped = true;
+                    }
+                }
+                if (!swapped) {/*if no number was swapped that means array is sorted now, break the loop.*/
+                    break;
+                }
+            }
+            return listToSort;
+        }
+        return [];
+    }
