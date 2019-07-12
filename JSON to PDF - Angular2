@@ -1,0 +1,49 @@
+import { Component } from '@angular/core';
+declare let jsPDF;
+
+@Component({
+  selector: 'my-app',
+  template: 
+    `<h1>JSON to PDF app</h1>
+    <div class="container" id="div1">
+        <button id="create" (click)="convert()">Create file</button> 
+    </div>
+    `
+})
+export class AppComponent { 
+   
+  convert(){
+    var item = [{
+      "Name" : "XYZ",
+      "Age" : "22",
+      "Gender" : "Male"
+    }];
+    var doc = new jsPDF();
+    var col = [];
+    Object.keys(item[0]).forEach(function (item) {
+	     col.push(item); // key
+     });
+    // var col = ["Details", "Values"];
+    var rows = [];
+     var temp = [];
+    item.forEach(element => {  
+       col.forEach(t => {      
+       temp.push(element[t])
+       });     
+       // var temp = [element.col[index],element.Age];
+        rows.push(temp);
+
+    }); 
+
+    doc.autoTable(col, rows);
+
+    doc.save('Test.pdf');
+  }
+}
+
+
+/*
+Copyright 2016 Google Inc. All Rights Reserved.
+Use of this source code is governed by an MIT-style license that
+can be found in the LICENSE file at http://angular.io/license
+*/
