@@ -1,0 +1,123 @@
+https://blog.fullstacktraining.com/caching-http-requests-with-angular/
+
+
+import { Observable } from 'rxjs/Observable';
+import 'rxjs/add/observable/of';
+import 'rxjs/add/operator/share';
+import 'rxjs/add/operator/map';
+// more code
+
+data;
+observable;
+
+getProducts() {
+  if (this.data) {
+    return Observable.of(this.data);
+  } else if (this.observable) {
+    return this.observable;
+  } else {
+    this.observable = this.http.get('/api/products', {
+      observe: 'response'
+    })
+    .map(response =>  {
+      this.observable = null;
+      if (response.status === 400) {
+        return 'Request failed.';
+      } else if (response.status === 200) {
+        this.data = response.body;
+        return this.data;
+      }
+    })
+    .share();
+    return this.observable;
+  }
+}
+
+---------------------------------interseptor ---------------------------------
+import { Injectable } from '@angular/core';
+import { HttpEvent, HttpRequest, HttpResponse, HttpInterceptor, HttpHandler } from '@angular/common/http';
+
+import { Observable } from 'rxjs/Observable';
+import { startWith, tap } from 'rxjs/operators';
+import 'rxjs/add/observable/of';
+
+import { RequestCache } from './request-cache.service';
+
+@Injectable()
+export class CachingInterceptor implements HttpInterceptor {
+  constructor(private cache: RequestCache) {}
+
+  intercept(req: HttpRequest<any>, next: HttpHandler) {
+    const cachedResponse = this.cache.get(req);
+    return cachedResponse ? Observable.of(cachedResponse) : this.sendRequest(req, next, this.cache);
+  }
+
+  sendRequest(
+    req: HttpRequest<any>,
+    next: HttpHandler,
+    cache: RequestCache): Observable<HttpEvent<any>> {
+    return next.handle(req).pipe(
+      tap(event => {
+        if (event instanceof HttpResponse) {
+          cache.put(req, event);
+        }
+      })
+    );
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  ---------------------------------------------------------------------
+  
+  
+  import { Injectable } from '@angular/core';
+import { HttpEvent, HttpRequest, HttpResponse, HttpInterceptor, HttpHandler } from '@angular/common/http';
+
+import { Observable } from 'rxjs/Observable';
+import { startWith, tap } from 'rxjs/operators';
+import 'rxjs/add/observable/of';
+
+import { RequestCache } from './request-cache.service';
+
+@Injectable()
+export class CachingInterceptor implements HttpInterceptor {
+  constructor(private cache: RequestCache) {}
+
+  intercept(req: HttpRequest<any>, next: HttpHandler) {
+    const cachedResponse = this.cache.get(req);
+    return cachedResponse ? Observable.of(cachedResponse) : this.sendRequest(req, next, this.cache);
+  }
+
+  sendRequest(
+    req: HttpRequest<any>,
+    next: HttpHandler,
+    cache: RequestCache): Observable<HttpEvent<any>> {
+    return next.handle(req).pipe(
+      tap(event => {
+        if (event instanceof HttpResponse) {
+          cache.put(req, event);
+        }
+      })
+    );
+  }
+}
+}
+
+-------------------------------------
+
+
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { RequestCache } from './request-cache.service';
+import { CachingInterceptor } from './caching-interceptor.service';
+
+// ...
+
+providers: [
+    RequestCache,
+    { provide: HTTP_INTERCEPTORS, useClass: CachingInterceptor, multi: true }
+  ],
