@@ -1,0 +1,29 @@
+What is the difference between position static, relative, absolute, fixed and sticky
+What is the difference between px, em and rem
+What is flex box and how it is different from box model
+What is the difference between display inline, block and inline-block
+How to target css for print
+What is reset.css and why it is used
+Pseudo elements vs Pseudo selectors
+   What is the output of below?
+var myName; 
+function myName () {
+console.log ("Rich");
+}
+console.log(typeof myName);
+What is the output of below?
+var myName = "Richard";
+function myName () {
+console.log ("Rich");
+}
+console.log(typeof myName);
+Remove the duplicates from the array [1, 2, 5, 2, 7, 5, 8]
+2 + "2" = ?; 2 - "2" = ?
+What is Closure in Javascript? Explain with example
+Use of Closure and its disadvantage
+What are async and defer attributes, how they are useful
+What is an event loop
+How to avoid multiple clicks on form submit or How you handle DOM manipulations on resize (debounce)
+"234" < "24" = ?
+Object.assign({}, [obj1, obj2]);
+Deep vs Shallow cloning
