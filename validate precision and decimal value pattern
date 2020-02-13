@@ -1,0 +1,11 @@
+$(function(){
+  $('.validate').keydown(function(){
+      var reg= /^(\d{0,4}|\d{0,4}\.\d{1,6})$/;
+      if($(this).val().match(reg)==null)
+         event.preventDefault();
+                                          });});
+                                          
+                                          
+                                          
+     ^(\d\.\d{5}|\d{2}\.\d{4})$  -----0.12345
+11.1234
