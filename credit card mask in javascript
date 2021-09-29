@@ -1,0 +1,9 @@
+function hideCardValue(val) {
+	document.getElementById("cardNoSafe").value = val;
+	var len = val.length;
+	if (len >= 14) {
+		const regex = /\d{4}(?= \d{1})/g;
+		const substr = "****";
+		document.getElementById("cardNo").value = val.replace(regex, substr);
+	}
+}
